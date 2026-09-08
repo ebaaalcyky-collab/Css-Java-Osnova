@@ -1,4 +1,6 @@
---// CSS JAVA - Main.lua (FULL & FIXED VERSION)
+--// CSS JAVA - Main.lua
+--// GUI + SPEED HACK (33) + MOVABLE ICON + SMART ESP WITH DROPDOWN
+
 local RAW_BASE = "https://raw.githubusercontent.com/ebaaalcyky-collab/Css-Java-Osnova/main/assets/"
 
 local ASSETS = {
@@ -23,9 +25,6 @@ local RunService = game:GetService("RunService")
 
 local Player = Players.LocalPlayer
 
--- Безопасный родительский контейнер для GUI (фикс для любых инжекторов)
-local ParentContainer = (gethui and gethui()) or CoreGui or Player:WaitForChild("PlayerGui")
-
 --//==================================================
 --// CONFIG
 --//==================================================
@@ -46,11 +45,11 @@ local CONFIG = {
 
     AnimationTime = 0.18,
     
-    MaxEspDistance = 250
+    MaxEspDistance = 250 -- Максимальная дистанция работы ВХ (в метрах / studs)
 }
 
 --//==================================================
---// TRANSLATIONS
+--// TRANSLATIONS (РОЛИ НА РУССКОМ)
 --//==================================================
 
 local ROLE_TRANSLATIONS = {
@@ -141,15 +140,20 @@ local COLORS = {
 
 local function Create(className, properties, parent)
     local object = Instance.new(className)
+
     for property, value in pairs(properties or {}) do
         object[property] = value
     end
+
     object.Parent = parent
+
     return object
 end
 
 local function AddCorner(parent, radius)
-    return Create("UICorner", { CornerRadius = UDim.new(0, radius) }, parent)
+    return Create("UICorner", {
+        CornerRadius = UDim.new(0, radius)
+    }, parent)
 end
 
 local function AddStroke(parent, color, transparency, thickness)
@@ -161,10 +165,17 @@ local function AddStroke(parent, color, transparency, thickness)
 end
 
 local function Tween(object, properties, duration)
-    if not object then return end
+    if not object then
+        return
+    end
+
     TweenService:Create(
         object,
-        TweenInfo.new(duration or CONFIG.AnimationTime, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+        TweenInfo.new(
+            duration or CONFIG.AnimationTime,
+            Enum.EasingStyle.Quint,
+            Enum.EasingDirection.Out
+        ),
         properties
     ):Play()
 end
@@ -173,8 +184,14 @@ end
 --// GUI ROOT
 --//==================================================
 
-if ParentContainer:FindFirstChild("CSS_JAVA_GUI") then
-    ParentContainer:FindFirstChild("CSS_JAVA_GUI"):Destroy()
+local ExistingGui = nil
+
+pcall(function()
+    ExistingGui = CoreGui:FindFirstChild("CSS_JAVA_GUI")
+end)
+
+if ExistingGui then
+    ExistingGui:Destroy()
 end
 
 local ScreenGui = Create("ScreenGui", {
@@ -183,7 +200,7 @@ local ScreenGui = Create("ScreenGui", {
     IgnoreGuiInset = true,
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     DisplayOrder = 999
-}, ParentContainer)
+}, CoreGui)
 
 --//==================================================
 --// FULL SCREEN BACKGROUND
@@ -225,7 +242,9 @@ local BackgroundOverlay = Create("Frame", {
 --// SCALE SYSTEM
 --//==================================================
 
-local UIScale = Create("UIScale", { Scale = 1 })
+local UIScale = Create("UIScale", {
+    Scale = 1
+})
 
 --//==================================================
 --// MAIN WINDOW
@@ -276,61 +295,251 @@ local Sidebar = Create("Frame", {
 
 AddStroke(Sidebar, COLORS.Border, 0.35, 1)
 
--- BRAND
-local Brand = Create("Frame", { Name = "Brand", Position = UDim2.fromOffset(20, 22), Size = UDim2.new(1, -40, 0, 58), BackgroundTransparency = 1, ZIndex = 6 }, Sidebar)
-local Logo = Create("ImageLabel", { Name = "Logo", Position = UDim2.fromOffset(0, 3), Size = UDim2.fromOffset(48, 48), BackgroundTransparency = 1, Image = ASSETS.logo, ScaleType = Enum.ScaleType.Fit, ZIndex = 7 }, Brand)
+--//==================================================
+--// BRAND
+--//==================================================
+
+local Brand = Create("Frame", {
+    Name = "Brand",
+    Position = UDim2.fromOffset(20, 22),
+    Size = UDim2.new(1, -40, 0, 58),
+    BackgroundTransparency = 1,
+    ZIndex = 6
+}, Sidebar)
+
+local Logo = Create("ImageLabel", {
+    Name = "Logo",
+    Position = UDim2.fromOffset(0, 3),
+    Size = UDim2.fromOffset(48, 48),
+    BackgroundTransparency = 1,
+    Image = ASSETS.logo,
+    ScaleType = Enum.ScaleType.Fit,
+    ZIndex = 7
+}, Brand)
+
 AddCorner(Logo, 12)
 
-Create("TextLabel", { Name = "Title", Position = UDim2.fromOffset(60, 3), Size = UDim2.new(1, -60, 0, 25), BackgroundTransparency = 1, Text = "CSS JAVA", TextColor3 = COLORS.Text, TextSize = 19, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 7 }, Brand)
-Create("TextLabel", { Name = "Subtitle", Position = UDim2.fromOffset(60, 28), Size = UDim2.new(1, -60, 0, 20), BackgroundTransparency = 1, Text = "CONTROL PANEL", TextColor3 = COLORS.SecondaryText, TextSize = 9, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 7 }, Brand)
+local BrandTitle = Create("TextLabel", {
+    Name = "Title",
+    Position = UDim2.fromOffset(60, 3),
+    Size = UDim2.new(1, -60, 0, 25),
+    BackgroundTransparency = 1,
+    Text = "CSS JAVA",
+    TextColor3 = COLORS.Text,
+    TextSize = 19,
+    Font = Enum.Font.GothamBold,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 7
+}, Brand)
 
--- SIDEBAR MENU CONTAINER
-local MenuContainer = Create("Frame", { Name = "Menu", Position = UDim2.fromOffset(12, 105), Size = UDim2.new(1, -24, 0, 280), BackgroundTransparency = 1, ZIndex = 7 }, Sidebar)
-Create("UIListLayout", { FillDirection = Enum.FillDirection.Vertical, HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 7) }, MenuContainer)
+local BrandSubtitle = Create("TextLabel", {
+    Name = "Subtitle",
+    Position = UDim2.fromOffset(60, 28),
+    Size = UDim2.new(1, -60, 0, 20),
+    BackgroundTransparency = 1,
+    Text = "CONTROL PANEL",
+    TextColor3 = COLORS.SecondaryText,
+    TextSize = 9,
+    Font = Enum.Font.GothamMedium,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 7
+}, Brand)
+
+--//==================================================
+--// SIDEBAR MENU
+--//==================================================
+
+local MenuContainer = Create("Frame", {
+    Name = "Menu",
+    Position = UDim2.fromOffset(12, 105),
+    Size = UDim2.new(1, -24, 0, 280),
+    BackgroundTransparency = 1,
+    ZIndex = 7
+}, Sidebar)
+
+Create("UIListLayout", {
+    FillDirection = Enum.FillDirection.Vertical,
+    HorizontalAlignment = Enum.HorizontalAlignment.Center,
+    SortOrder = Enum.SortOrder.LayoutOrder,
+    Padding = UDim.new(0, 7)
+}, MenuContainer)
 
 --//==================================================
 --// CONTENT
 --//==================================================
 
-local Content = Create("Frame", { Name = "Content", Position = UDim2.fromOffset(CONFIG.SidebarWidth, 0), Size = UDim2.new(1, -CONFIG.SidebarWidth, 1, 0), BackgroundTransparency = 1, ZIndex = 4 }, MainFrame)
-local TopBar = Create("Frame", { Name = "TopBar", Position = UDim2.fromOffset(30, 25), Size = UDim2.new(1, -60, 0, 50), BackgroundTransparency = 1, ZIndex = 8 }, Content)
+local Content = Create("Frame", {
+    Name = "Content",
+    Position = UDim2.fromOffset(CONFIG.SidebarWidth, 0),
+    Size = UDim2.new(1, -CONFIG.SidebarWidth, 1, 0),
+    BackgroundTransparency = 1,
+    ZIndex = 4
+}, MainFrame)
 
-local CurrentTitle = Create("TextLabel", { Name = "CurrentTitle", Position = UDim2.fromOffset(0, 0), Size = UDim2.new(1, -130, 0, 29), BackgroundTransparency = 1, Text = "AIM", TextColor3 = COLORS.Text, TextSize = 24, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9 }, TopBar)
-local CurrentSubtitle = Create("TextLabel", { Name = "CurrentSubtitle", Position = UDim2.fromOffset(0, 29), Size = UDim2.new(1, -130, 0, 20), BackgroundTransparency = 1, Text = "Basic configuration panel", TextColor3 = COLORS.SecondaryText, TextSize = 12, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9 }, TopBar)
+--//==================================================
+--// TOP BAR
+--//==================================================
 
--- BUTTONS: CLOSE & DRAG
-local CloseButton = Create("TextButton", { Name = "Close", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, 0, 0, 0), Size = UDim2.fromOffset(38, 38), BackgroundColor3 = COLORS.Card, BackgroundTransparency = 0.1, BorderSizePixel = 0, Text = "×", TextColor3 = COLORS.SecondaryText, TextSize = 22, Font = Enum.Font.GothamMedium, AutoButtonColor = false, ZIndex = 10 }, TopBar)
+local TopBar = Create("Frame", {
+    Name = "TopBar",
+    Position = UDim2.fromOffset(30, 25),
+    Size = UDim2.new(1, -60, 0, 50),
+    BackgroundTransparency = 1,
+    ZIndex = 8
+}, Content)
+
+local CurrentTitle = Create("TextLabel", {
+    Name = "CurrentTitle",
+    Position = UDim2.fromOffset(0, 0),
+    Size = UDim2.new(1, -130, 0, 29),
+    BackgroundTransparency = 1,
+    Text = "AIM",
+    TextColor3 = COLORS.Text,
+    TextSize = 24,
+    Font = Enum.Font.GothamBold,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 9
+}, TopBar)
+
+local CurrentSubtitle = Create("TextLabel", {
+    Name = "CurrentSubtitle",
+    Position = UDim2.fromOffset(0, 29),
+    Size = UDim2.new(1, -130, 0, 20),
+    BackgroundTransparency = 1,
+    Text = "Basic configuration panel",
+    TextColor3 = COLORS.SecondaryText,
+    TextSize = 12,
+    Font = Enum.Font.GothamMedium,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 9
+}, TopBar)
+
+--//==================================================
+--// CLOSE BUTTON
+--//==================================================
+
+local CloseButton = Create("TextButton", {
+    Name = "Close",
+    AnchorPoint = Vector2.new(1, 0),
+    Position = UDim2.new(1, 0, 0, 0),
+    Size = UDim2.fromOffset(38, 38),
+    BackgroundColor3 = COLORS.Card,
+    BackgroundTransparency = 0.1,
+    BorderSizePixel = 0,
+    Text = "×",
+    TextColor3 = COLORS.SecondaryText,
+    TextSize = 22,
+    Font = Enum.Font.GothamMedium,
+    AutoButtonColor = false,
+    ZIndex = 10
+}, TopBar)
+
 AddCorner(CloseButton, 10)
 AddStroke(CloseButton, COLORS.Border, 0.25, 1)
 
-CloseButton.MouseEnter:Connect(function() Tween(CloseButton, { BackgroundColor3 = Color3.fromRGB(75, 35, 45), TextColor3 = COLORS.White }) end)
-CloseButton.MouseLeave:Connect(function() Tween(CloseButton, { BackgroundColor3 = COLORS.Card, TextColor3 = COLORS.SecondaryText }) end)
+CloseButton.MouseEnter:Connect(function()
+    Tween(CloseButton, {
+        BackgroundColor3 = Color3.fromRGB(75, 35, 45),
+        TextColor3 = COLORS.White
+    })
+end)
 
-local DragButton = Create("TextButton", { Name = "DragButton", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -47, 0, 0), Size = UDim2.fromOffset(38, 38), BackgroundColor3 = COLORS.Card, BackgroundTransparency = 0.1, BorderSizePixel = 0, Text = "⠿", TextColor3 = COLORS.SecondaryText, TextSize = 20, Font = Enum.Font.GothamBold, AutoButtonColor = false, ZIndex = 10 }, TopBar)
+CloseButton.MouseLeave:Connect(function()
+    Tween(CloseButton, {
+        BackgroundColor3 = COLORS.Card,
+        TextColor3 = COLORS.SecondaryText
+    })
+end)
+
+--//==================================================
+--// DRAG BUTTON
+--//==================================================
+
+local DragButton = Create("TextButton", {
+    Name = "DragButton",
+    AnchorPoint = Vector2.new(1, 0),
+    Position = UDim2.new(1, -47, 0, 0),
+    Size = UDim2.fromOffset(38, 38),
+    BackgroundColor3 = COLORS.Card,
+    BackgroundTransparency = 0.1,
+    BorderSizePixel = 0,
+    Text = "⠿",
+    TextColor3 = COLORS.SecondaryText,
+    TextSize = 20,
+    Font = Enum.Font.GothamBold,
+    AutoButtonColor = false,
+    ZIndex = 10
+}, TopBar)
+
 AddCorner(DragButton, 10)
 AddStroke(DragButton, COLORS.Border, 0.25, 1)
 
--- PAGES FOLDER
-local PagesFolder = Create("Folder", { Name = "PagesFolder" }, Content)
+--//==================================================
+--// PAGES CONTAINER
+--//==================================================
+
+local PagesFolder = Create("Folder", {
+    Name = "PagesFolder"
+}, Content)
 
 --//==================================================
 --// HELPER TO CREATE TOGGLE
 --//==================================================
 
 local function CreateToggle(parent, text, yOffset, callback)
-    local Row = Create("Frame", { Name = text .. "Row", Position = UDim2.fromOffset(20, yOffset), Size = UDim2.new(1, -40, 0, 44), BackgroundTransparency = 1, ZIndex = 10 }, parent)
+    local Row = Create("Frame", {
+        Name = text .. "Row",
+        Position = UDim2.fromOffset(20, yOffset),
+        Size = UDim2.new(1, -40, 0, 44),
+        BackgroundTransparency = 1,
+        ZIndex = 10
+    }, parent)
 
-    Create("TextLabel", { Name = "Label", Position = UDim2.fromOffset(0, 0), Size = UDim2.new(1, -90, 1, 0), BackgroundTransparency = 1, Text = text, TextColor3 = COLORS.Text, TextSize = 13, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Center, ZIndex = 11 }, Row)
+    Create("TextLabel", {
+        Name = "Label",
+        Position = UDim2.fromOffset(0, 0),
+        Size = UDim2.new(1, -90, 1, 0),
+        BackgroundTransparency = 1,
+        Text = text,
+        TextColor3 = COLORS.Text,
+        TextSize = 13,
+        Font = Enum.Font.GothamMedium,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        ZIndex = 11
+    }, Row)
 
-    local Toggle = Create("TextButton", { Name = "Toggle", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, 0, 0.5, 0), Size = UDim2.fromOffset(56, 30), BackgroundColor3 = COLORS.ToggleOff, BorderSizePixel = 0, Text = "", AutoButtonColor = false, ZIndex = 11 }, Row)
+    local Toggle = Create("TextButton", {
+        Name = "Toggle",
+        AnchorPoint = Vector2.new(1, 0.5),
+        Position = UDim2.new(1, 0, 0.5, 0),
+        Size = UDim2.fromOffset(56, 30),
+        BackgroundColor3 = COLORS.ToggleOff,
+        BorderSizePixel = 0,
+        Text = "",
+        AutoButtonColor = false,
+        ZIndex = 11
+    }, Row)
+
     AddCorner(Toggle, 15)
 
-    local Circle = Create("Frame", { Name = "Circle", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 4, 0.5, 0), Size = UDim2.fromOffset(22, 22), BackgroundColor3 = COLORS.SecondaryText, BorderSizePixel = 0, ZIndex = 12 }, Toggle)
+    local Circle = Create("Frame", {
+        Name = "Circle",
+        AnchorPoint = Vector2.new(0, 0.5),
+        Position = UDim2.new(0, 4, 0.5, 0),
+        Size = UDim2.fromOffset(22, 22),
+        BackgroundColor3 = COLORS.SecondaryText,
+        BorderSizePixel = 0,
+        ZIndex = 12
+    }, Toggle)
+
     AddCorner(Circle, 11)
 
     local State = false
+
     local function SetState(value)
         State = value
+
         if State then
             Tween(Toggle, { BackgroundColor3 = COLORS.ToggleOn })
             Tween(Circle, { Position = UDim2.new(1, -26, 0.5, 0), BackgroundColor3 = COLORS.White })
@@ -338,10 +547,16 @@ local function CreateToggle(parent, text, yOffset, callback)
             Tween(Toggle, { BackgroundColor3 = COLORS.ToggleOff })
             Tween(Circle, { Position = UDim2.new(0, 4, 0.5, 0), BackgroundColor3 = COLORS.SecondaryText })
         end
-        if callback then callback(State) end
+
+        if callback then
+            callback(State)
+        end
     end
 
-    Toggle.Activated:Connect(function() SetState(not State) end)
+    Toggle.Activated:Connect(function()
+        SetState(not State)
+    end)
+
     return Row
 end
 
@@ -350,64 +565,249 @@ end
 --//==================================================
 
 -- 1. AIM PAGE
-local AimPage = Create("Frame", { Name = "AimPage", Position = UDim2.fromOffset(0, 0), Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = true, ZIndex = 4 }, PagesFolder)
-local AimCard = Create("Frame", { Name = "DemoSettings", Position = UDim2.fromOffset(30, 105), Size = UDim2.new(1, -60, 0, 250), BackgroundColor3 = COLORS.Card, BackgroundTransparency = 0.08, BorderSizePixel = 0, ZIndex = 8 }, AimPage)
+local AimPage = Create("Frame", {
+    Name = "AimPage",
+    Position = UDim2.fromOffset(0, 0),
+    Size = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    Visible = true,
+    ZIndex = 4
+}, PagesFolder)
+
+local AimCard = Create("Frame", {
+    Name = "DemoSettings",
+    Position = UDim2.fromOffset(30, 105),
+    Size = UDim2.new(1, -60, 0, 250),
+    BackgroundColor3 = COLORS.Card,
+    BackgroundTransparency = 0.08,
+    BorderSizePixel = 0,
+    ZIndex = 8
+}, AimPage)
+
 AddCorner(AimCard, 14)
 AddStroke(AimCard, COLORS.Border, 0.25, 1)
 
-Create("TextLabel", { Name = "CardTitle", Position = UDim2.fromOffset(22, 18), Size = UDim2.new(1, -44, 0, 25), BackgroundTransparency = 1, Text = "DEMONSTRATION", TextColor3 = COLORS.Text, TextSize = 13, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9 }, AimCard)
+Create("TextLabel", {
+    Name = "CardTitle",
+    Position = UDim2.fromOffset(22, 18),
+    Size = UDim2.new(1, -44, 0, 25),
+    BackgroundTransparency = 1,
+    Text = "DEMONSTRATION",
+    TextColor3 = COLORS.Text,
+    TextSize = 13,
+    Font = Enum.Font.GothamBold,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 9
+}, AimCard)
+
 CreateToggle(AimCard, "Enabled", 72)
 CreateToggle(AimCard, "Preview", 124)
 CreateToggle(AimCard, "Advanced", 176)
 
--- 2. WH PAGE
-local WhPage = Create("Frame", { Name = "WhPage", Position = UDim2.fromOffset(0, 0), Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false, ZIndex = 4 }, PagesFolder)
-local WhCard = Create("Frame", { Name = "WhSettings", Position = UDim2.fromOffset(30, 105), Size = UDim2.new(1, -60, 0, 130), BackgroundColor3 = COLORS.Card, BackgroundTransparency = 0.08, BorderSizePixel = 0, ClipsDescendants = true, ZIndex = 8 }, WhPage)
+
+-- 2. WH / VISUALS PAGE (ESP WITH DROPDOWN MENU)
+local WhPage = Create("Frame", {
+    Name = "WhPage",
+    Position = UDim2.fromOffset(0, 0),
+    Size = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    Visible = false,
+    ZIndex = 4
+}, PagesFolder)
+
+local WhCard = Create("Frame", {
+    Name = "WhSettings",
+    Position = UDim2.fromOffset(30, 105),
+    Size = UDim2.new(1, -60, 0, 130),
+    BackgroundColor3 = COLORS.Card,
+    BackgroundTransparency = 0.08,
+    BorderSizePixel = 0,
+    ClipsDescendants = true,
+    ZIndex = 8
+}, WhPage)
+
 AddCorner(WhCard, 14)
 AddStroke(WhCard, COLORS.Border, 0.25, 1)
 
-Create("TextLabel", { Name = "CardTitle", Position = UDim2.fromOffset(22, 18), Size = UDim2.new(1, -44, 0, 25), BackgroundTransparency = 1, Text = "VISUALS", TextColor3 = COLORS.Text, TextSize = 13, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9 }, WhCard)
+Create("TextLabel", {
+    Name = "CardTitle",
+    Position = UDim2.fromOffset(22, 18),
+    Size = UDim2.new(1, -44, 0, 25),
+    BackgroundTransparency = 1,
+    Text = "VISUALS",
+    TextColor3 = COLORS.Text,
+    TextSize = 13,
+    Font = Enum.Font.GothamBold,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 9
+}, WhCard)
 
-local ESP_SETTINGS = { Enabled = false, Roles = true, Health = true, Armor = true, Distance = true }
+-- ESP SETTINGS STATE
+local ESP_SETTINGS = {
+    Enabled = false,
+    Roles = true,
+    Health = true,
+    Armor = true,
+    Distance = true
+}
 
-CreateToggle(WhCard, "Wh", 60, function(state) ESP_SETTINGS.Enabled = state end)
+-- MAIN ESP TOGGLE
+CreateToggle(WhCard, "Wh", 60, function(state)
+    ESP_SETTINGS.Enabled = state
+end)
 
-local DropdownButton = Create("TextButton", { Name = "DropdownButton", Position = UDim2.fromOffset(20, 108), Size = UDim2.new(1, -40, 0, 18), BackgroundTransparency = 1, Text = "▼", TextColor3 = COLORS.SecondaryText, TextSize = 12, Font = Enum.Font.GothamBold, ZIndex = 11 }, WhCard)
+-- DROPDOWN ARROW BUTTON
+local DropdownButton = Create("TextButton", {
+    Name = "DropdownButton",
+    Position = UDim2.fromOffset(20, 108),
+    Size = UDim2.new(1, -40, 0, 18),
+    BackgroundTransparency = 1,
+    Text = "▼",
+    TextColor3 = COLORS.SecondaryText,
+    TextSize = 12,
+    Font = Enum.Font.GothamBold,
+    ZIndex = 11
+}, WhCard)
+
 local isDropdownOpen = false
 
 DropdownButton.Activated:Connect(function()
     isDropdownOpen = not isDropdownOpen
-    DropdownButton.Text = isDropdownOpen and "▲" or "▼"
-    Tween(WhCard, { Size = UDim2.new(1, -60, 0, isDropdownOpen and 350 or 130) })
+    if isDropdownOpen then
+        DropdownButton.Text = "▲"
+        Tween(WhCard, { Size = UDim2.new(1, -60, 0, 350) })
+    else
+        DropdownButton.Text = "▼"
+        Tween(WhCard, { Size = UDim2.new(1, -60, 0, 130) })
+    end
 end)
 
-local SubContainer = Create("Frame", { Name = "SubContainer", Position = UDim2.fromOffset(20, 130), Size = UDim2.new(1, -40, 0, 210), BackgroundTransparency = 1, ZIndex = 10 }, WhCard)
+-- DROPDOWN SUB-SETTINGS (ENGLISH NAMES)
+local SubContainer = Create("Frame", {
+    Name = "SubContainer",
+    Position = UDim2.fromOffset(20, 130),
+    Size = UDim2.new(1, -40, 0, 210),
+    BackgroundTransparency = 1,
+    ZIndex = 10
+}, WhCard)
+
 CreateToggle(SubContainer, "Roles", 0, function(state) ESP_SETTINGS.Roles = state end)
 CreateToggle(SubContainer, "Health Bar", 50, function(state) ESP_SETTINGS.Health = state end)
 CreateToggle(SubContainer, "Armor Bar", 100, function(state) ESP_SETTINGS.Armor = state end)
 CreateToggle(SubContainer, "Distance", 150, function(state) ESP_SETTINGS.Distance = state end)
 
---// ================= ESP LOGIC =================
-local EspStorage = Instance.new("Folder")
-EspStorage.Name = "CSS_ESP_STORAGE"
-EspStorage.Parent = ParentContainer
-
-local function RemoveEsp(targetPlr)
-    local old = EspStorage:FindFirstChild(targetPlr.Name)
-    if old then old:Destroy() end
-    if targetPlr.Character then
-        local hl = targetPlr.Character:FindFirstChild("CSS_ESP_HL")
-        if hl then hl:Destroy() end
+-- ESP ENGINE LOGIC
+local function ClearEsp(targetPlayer)
+    if targetPlayer and targetPlayer.Character then
+        local oldGui = targetPlayer.Character:FindFirstChild("CSS_ESP_GUI")
+        if oldGui then oldGui:Destroy() end
+        local oldHl = targetPlayer.Character:FindFirstChild("CSS_ESP_HL")
+        if oldHl then oldHl:Destroy() end
     end
+end
+
+local function CreateEspForPlayer(plr)
+    if plr == Player then return end
+
+    local function ApplyEsp(character)
+        if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+        ClearEsp(plr)
+
+        -- Highlight
+        local hl = Instance.new("Highlight")
+        hl.Name = "CSS_ESP_HL"
+        hl.Adornee = character
+        hl.FillColor = COLORS.Accent
+        hl.FillTransparency = 0.6
+        hl.OutlineColor = COLORS.White
+        hl.OutlineTransparency = 0.1
+        hl.Enabled = false
+        hl.Parent = character
+
+        -- BillboardGui
+        local bb = Instance.new("BillboardGui")
+        bb.Name = "CSS_ESP_GUI"
+        bb.Adornee = character:FindFirstChild("Head") or character:FindFirstChild("HumanoidRootPart")
+        bb.Size = UDim2.fromOffset(160, 70)
+        bb.StudsOffset = Vector3.new(0, 3.2, 0)
+        bb.AlwaysOnTop = true
+        bb.Enabled = false
+
+        local container = Instance.new("Frame")
+        container.Name = "Container"
+        container.Size = UDim2.fromScale(1, 1)
+        container.BackgroundTransparency = 1
+        container.Parent = bb
+
+        -- Name
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Name = "NameLabel"
+        nameLabel.Size = UDim2.new(1, 0, 0, 16)
+        nameLabel.Position = UDim2.fromOffset(0, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = plr.Name
+        nameLabel.TextColor3 = COLORS.White
+        nameLabel.TextSize = 13
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.TextStrokeTransparency = 0.3
+        nameLabel.Parent = container
+
+        -- Role
+        local roleLabel = Instance.new("TextLabel")
+        roleLabel.Name = "RoleLabel"
+        roleLabel.Size = UDim2.new(1, 0, 0, 14)
+        roleLabel.Position = UDim2.fromOffset(0, 16)
+        roleLabel.BackgroundTransparency = 1
+        roleLabel.Text = "[" .. GetRussianRole(plr) .. "]"
+        roleLabel.TextColor3 = COLORS.Accent
+        roleLabel.TextSize = 11
+        roleLabel.Font = Enum.Font.GothamMedium
+        roleLabel.TextStrokeTransparency = 0.4
+        roleLabel.Parent = container
+
+        -- Health & Armor text/bar
+        local statsLabel = Instance.new("TextLabel")
+        statsLabel.Name = "StatsLabel"
+        statsLabel.Size = UDim2.new(1, 0, 0, 14)
+        statsLabel.Position = UDim2.fromOffset(0, 30)
+        statsLabel.BackgroundTransparency = 1
+        statsLabel.Text = "HP: 100 | AP: 0"
+        statsLabel.TextColor3 = COLORS.Health
+        statsLabel.TextSize = 10
+        statsLabel.Font = Enum.Font.GothamBold
+        statsLabel.TextStrokeTransparency = 0.5
+        statsLabel.Parent = container
+
+        -- Distance
+        local distLabel = Instance.new("TextLabel")
+        distLabel.Name = "DistLabel"
+        distLabel.Size = UDim2.new(1, 0, 0, 14)
+        distLabel.Position = UDim2.fromOffset(0, 44)
+        distLabel.BackgroundTransparency = 1
+        distLabel.Text = "0 m"
+        distLabel.TextColor3 = COLORS.SecondaryText
+        distLabel.TextSize = 10
+        distLabel.Font = Enum.Font.Gotham
+        distLabel.TextStrokeTransparency = 0.5
+        distLabel.Parent = container
+
+        bb.Parent = character
+    end
+
+    if plr.Character then
+        ApplyEsp(plr.Character)
+    end
+    plr.CharacterAdded:Connect(ApplyEsp)
 end
 
 RunService.RenderStepped:Connect(function()
     if not ESP_SETTINGS.Enabled then
-        EspStorage:ClearAllChildren()
         for _, plr in ipairs(Players:GetPlayers()) do
             if plr.Character then
+                local gui = plr.Character:FindFirstChild("CSS_ESP_GUI")
                 local hl = plr.Character:FindFirstChild("CSS_ESP_HL")
-                if hl then hl:Destroy() end
+                if gui then gui.Enabled = false end
+                if hl then hl.Enabled = false end
             end
         end
         return
@@ -417,138 +817,199 @@ RunService.RenderStepped:Connect(function()
     local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
 
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= Player and plr.Character then
+        if plr ~= Player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
             local char = plr.Character
-            local hrp = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Head")
+            local hrp = char.HumanoidRootPart
+            local gui = char:FindFirstChild("CSS_ESP_GUI")
+            local hl = char:FindFirstChild("CSS_ESP_HL")
 
-            if hrp and myHrp then
-                local dist = (myHrp.Position - hrp.Position).Magnitude
+            if not gui or not hl then
+                CreateEspForPlayer(plr)
+                gui = char:FindFirstChild("CSS_ESP_GUI")
+                hl = char:FindFirstChild("CSS_ESP_HL")
+            end
 
-                if dist <= CONFIG.MaxEspDistance then
-                    local hl = char:FindFirstChild("CSS_ESP_HL")
-                    if not hl then
-                        hl = Instance.new("Highlight")
-                        hl.Name = "CSS_ESP_HL"
-                        hl.Adornee = char
-                        hl.FillColor = COLORS.Accent
-                        hl.FillTransparency = 0.6
-                        hl.OutlineColor = COLORS.White
-                        hl.Parent = char
-                    end
+            if myHrp and gui and hl then
+                local distance = (myHrp.Position - hrp.Position).Magnitude
+                
+                if distance <= CONFIG.MaxEspDistance then
+                    gui.Enabled = true
+                    hl.Enabled = true
 
-                    local gui = EspStorage:FindFirstChild(plr.Name)
-                    if not gui then
-                        gui = Instance.new("BillboardGui")
-                        gui.Name = plr.Name
-                        gui.Size = UDim2.fromOffset(160, 70)
-                        gui.StudsOffset = Vector3.new(0, 3.5, 0)
-                        gui.AlwaysOnTop = true
-
-                        local c = Create("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1 }, gui)
-                        Create("TextLabel", { Name = "NameL", Size = UDim2.new(1,0,0,14), Position = UDim2.fromOffset(0,0), BackgroundTransparency = 1, Text = plr.Name, TextColor3 = COLORS.White, TextSize = 12, Font = Enum.Font.GothamBold }, c)
-                        Create("TextLabel", { Name = "RoleL", Size = UDim2.new(1,0,0,14), Position = UDim2.fromOffset(0,14), BackgroundTransparency = 1, TextColor3 = COLORS.Accent, TextSize = 10, Font = Enum.Font.GothamMedium }, c)
-                        Create("TextLabel", { Name = "StatsL", Size = UDim2.new(1,0,0,14), Position = UDim2.fromOffset(0,28), BackgroundTransparency = 1, TextColor3 = COLORS.Health, TextSize = 10, Font = Enum.Font.GothamBold }, c)
-                        Create("TextLabel", { Name = "DistL", Size = UDim2.new(1,0,0,14), Position = UDim2.fromOffset(0,42), BackgroundTransparency = 1, TextColor3 = COLORS.SecondaryText, TextSize = 10, Font = Enum.Font.Gotham }, c)
-
-                        gui.Parent = EspStorage
-                    end
-
-                    gui.Adornee = hrp
-
-                    local container = gui:FindFirstChild("Frame")
+                    local container = gui:FindFirstChild("Container")
                     if container then
-                        local roleL = container:FindFirstChild("RoleL")
-                        local statsL = container:FindFirstChild("StatsL")
-                        local distL = container:FindFirstChild("DistL")
+                        local roleLbl = container:FindFirstChild("RoleLabel")
+                        local statsLbl = container:FindFirstChild("StatsLabel")
+                        local distLbl = container:FindFirstChild("DistLabel")
 
-                        if roleL then
-                            roleL.Visible = ESP_SETTINGS.Roles
-                            roleL.Text = "[" .. GetRussianRole(plr) .. "]"
+                        -- Roles visibility
+                        if roleLbl then
+                            roleLbl.Visible = ESP_SETTINGS.Roles
+                            roleLbl.Text = "[" .. GetRussianRole(plr) .. "]"
                         end
 
-                        if statsL then
-                            local hum = char:FindFirstChildOfClass("Humanoid")
-                            local hp = hum and math.floor(hum.Health) or 0
-                            local ap = 0
+                        -- Health / Armor logic
+                        if statsLbl then
+                            local humanoid = char:FindFirstChildOfClass("Humanoid")
+                            local hp = humanoid and math.floor(humanoid.Health) or 0
+                            
+                            -- Armor check (leaderstats or Armor object)
+                            local armor = 0
                             local ls = plr:FindFirstChild("leaderstats")
-                            if ls and ls:FindFirstChild("Armor") then ap = math.floor(ls.Armor.Value) end
+                            if ls and ls:FindFirstChild("Armor") then
+                                armor = math.floor(ls.Armor.Value)
+                            elseif char:FindFirstChild("Armor") then
+                                armor = math.floor(char.Armor.Value)
+                            end
 
-                            local parts = {}
-                            if ESP_SETTINGS.Health then table.insert(parts, "HP: " .. hp) end
-                            if ESP_SETTINGS.Armor then table.insert(parts, "AP: " .. ap) end
-                            statsL.Text = table.concat(parts, " | ")
-                            statsL.Visible = (#parts > 0)
+                            local textParts = {}
+                            if ESP_SETTINGS.Health then table.insert(textParts, "HP: " .. hp) end
+                            if ESP_SETTINGS.Armor then table.insert(textParts, "AP: " .. armor) end
+
+                            statsLbl.Text = table.concat(textParts, " | ")
+                            statsLbl.Visible = (ESP_SETTINGS.Health or ESP_SETTINGS.Armor)
                         end
 
-                        if distL then
-                            distL.Visible = ESP_SETTINGS.Distance
-                            distL.Text = math.floor(dist) .. " m"
+                        -- Distance visibility
+                        if distLbl then
+                            distLbl.Visible = ESP_SETTINGS.Distance
+                            distLbl.Text = math.floor(distance) .. " m"
                         end
                     end
                 else
-                    RemoveEsp(plr)
+                    gui.Enabled = false
+                    hl.Enabled = false
                 end
             end
         end
     end
 end)
 
-Players.PlayerRemoving:Connect(RemoveEsp)
 
--- 3. MOVEMENT PAGE
-local MovementPage = Create("Frame", { Name = "MovementPage", Position = UDim2.fromOffset(0, 0), Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false, ZIndex = 4 }, PagesFolder)
-local MovementCard = Create("Frame", { Name = "MovementSettings", Position = UDim2.fromOffset(30, 105), Size = UDim2.new(1, -60, 0, 150), BackgroundColor3 = COLORS.Card, BackgroundTransparency = 0.08, BorderSizePixel = 0, ZIndex = 8 }, MovementPage)
+-- 3. MOVEMENT PAGE (SPEED-HACK = 33)
+local MovementPage = Create("Frame", {
+    Name = "MovementPage",
+    Position = UDim2.fromOffset(0, 0),
+    Size = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    Visible = false,
+    ZIndex = 4
+}, PagesFolder)
+
+local MovementCard = Create("Frame", {
+    Name = "MovementSettings",
+    Position = UDim2.fromOffset(30, 105),
+    Size = UDim2.new(1, -60, 0, 150),
+    BackgroundColor3 = COLORS.Card,
+    BackgroundTransparency = 0.08,
+    BorderSizePixel = 0,
+    ZIndex = 8
+}, MovementPage)
+
 AddCorner(MovementCard, 14)
 AddStroke(MovementCard, COLORS.Border, 0.25, 1)
 
-Create("TextLabel", { Name = "CardTitle", Position = UDim2.fromOffset(22, 18), Size = UDim2.new(1, -44, 0, 25), BackgroundTransparency = 1, Text = "MOVEMENT CONFIG", TextColor3 = COLORS.Text, TextSize = 13, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9 }, MovementCard)
+Create("TextLabel", {
+    Name = "CardTitle",
+    Position = UDim2.fromOffset(22, 18),
+    Size = UDim2.new(1, -44, 0, 25),
+    BackgroundTransparency = 1,
+    Text = "MOVEMENT CONFIG",
+    TextColor3 = COLORS.Text,
+    TextSize = 13,
+    Font = Enum.Font.GothamBold,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 9
+}, MovementCard)
 
 local speedHackEnabled = false
 RunService.RenderStepped:Connect(function()
-    if speedHackEnabled and Player.Character then
-        local humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then humanoid.WalkSpeed = 33 end
+    if speedHackEnabled then
+        local character = Player.Character
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = 33
+            end
+        end
     end
 end)
 
 CreateToggle(MovementCard, "speed-hack", 72, function(state)
     speedHackEnabled = state
-    if not state and Player.Character then
-        local humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
-        if humanoid then humanoid.WalkSpeed = 16 end
+    if not state then
+        local character = Player.Character
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = 16
+            end
+        end
     end
 end)
 
--- 4. OTHER PAGE
-local OtherPage = Create("Frame", { Name = "OtherPage", Position = UDim2.fromOffset(0, 0), Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false, ZIndex = 4 }, PagesFolder)
-local OtherCard = Create("Frame", { Name = "OtherSettings", Position = UDim2.fromOffset(30, 105), Size = UDim2.new(1, -60, 0, 150), BackgroundColor3 = COLORS.Card, BackgroundTransparency = 0.08, BorderSizePixel = 0, ZIndex = 8 }, OtherPage)
-AddCorner(OtherCard, 14)
-AddStroke(OtherCard, COLORS.Border, 0.25, 1)
-Create("TextLabel", { Name = "CardTitle", Position = UDim2.fromOffset(22, 18), Size = UDim2.new(1, -44, 0, 25), BackgroundTransparency = 1, Text = "OTHER SETTINGS", TextColor3 = COLORS.Text, TextSize = 13, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9 }, OtherCard)
-
--- 5. SETTINGS PAGE
-local SettingsPage = Create("Frame", { Name = "SettingsPage", Position = UDim2.fromOffset(0, 0), Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false, ZIndex = 4 }, PagesFolder)
-local SettingsCard = Create("Frame", { Name = "SettingsContent", Position = UDim2.fromOffset(30, 105), Size = UDim2.new(1, -60, 0, 150), BackgroundColor3 = COLORS.Card, BackgroundTransparency = 0.08, BorderSizePixel = 0, ZIndex = 8 }, SettingsPage)
-AddCorner(SettingsCard, 14)
-AddStroke(SettingsCard, COLORS.Border, 0.25, 1)
-Create("TextLabel", { Name = "CardTitle", Position = UDim2.fromOffset(22, 18), Size = UDim2.new(1, -44, 0, 25), BackgroundTransparency = 1, Text = "UI SETTINGS", TextColor3 = COLORS.Text, TextSize = 13, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9 }, SettingsCard)
+local OtherPage = Create("Frame", { Name = "OtherPage", Size = UDim2.fromScale(1,1), BackgroundTransparency = 1, Visible = false }, PagesFolder)
+local SettingsPage = Create("Frame", { Name = "SettingsPage", Size = UDim2.fromScale(1,1), BackgroundTransparency = 1, Visible = false }, PagesFolder)
 
 --//==================================================
---// PLAYER PANEL (BOTTOM LEFT)
+--// PLAYER PANEL
 --//==================================================
 
-local PlayerPanel = Create("Frame", { Name = "PlayerPanel", AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 12, 1, -15), Size = UDim2.new(1, -24, 0, 55), BackgroundColor3 = COLORS.Card, BackgroundTransparency = 0.12, BorderSizePixel = 0, ZIndex = 8 }, Sidebar)
+local PlayerPanel = Create("Frame", {
+    Name = "PlayerPanel",
+    AnchorPoint = Vector2.new(0, 1),
+    Position = UDim2.new(0, 12, 1, -15),
+    Size = UDim2.new(1, -24, 0, 55),
+    BackgroundColor3 = COLORS.Card,
+    BackgroundTransparency = 0.12,
+    BorderSizePixel = 0,
+    ZIndex = 8
+}, Sidebar)
+
 AddCorner(PlayerPanel, 12)
 AddStroke(PlayerPanel, COLORS.Border, 0.3, 1)
 
-local PlayerIcon = Create("ImageLabel", { Name = "PlayerIcon", Position = UDim2.fromOffset(8, 7), Size = UDim2.fromOffset(40, 40), BackgroundTransparency = 1, Image = ASSETS.player, ScaleType = Enum.ScaleType.Fit, ZIndex = 9 }, PlayerPanel)
+local PlayerIcon = Create("ImageLabel", {
+    Name = "PlayerIcon",
+    Position = UDim2.fromOffset(8, 7),
+    Size = UDim2.fromOffset(40, 40),
+    BackgroundTransparency = 1,
+    Image = ASSETS.player,
+    ScaleType = Enum.ScaleType.Fit,
+    ZIndex = 9
+}, PlayerPanel)
+
 AddCorner(PlayerIcon, 20)
 
-Create("TextLabel", { Name = "PlayerName", Position = UDim2.fromOffset(57, 7), Size = UDim2.new(1, -65, 0, 22), BackgroundTransparency = 1, Text = Player and Player.Name or "Player", TextColor3 = COLORS.Text, TextSize = 12, Font = Enum.Font.GothamBold, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 9 }, PlayerPanel)
-Create("TextLabel", { Name = "PlayerRole", Position = UDim2.fromOffset(57, 28), Size = UDim2.new(1, -65, 0, 17), BackgroundTransparency = 1, Text = "CSS JAVA", TextColor3 = COLORS.SecondaryText, TextSize = 9, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9 }, PlayerPanel)
+Create("TextLabel", {
+    Name = "PlayerName",
+    Position = UDim2.fromOffset(57, 7),
+    Size = UDim2.new(1, -65, 0, 22),
+    BackgroundTransparency = 1,
+    Text = Player and Player.Name or "Player",
+    TextColor3 = COLORS.Text,
+    TextSize = 12,
+    Font = Enum.Font.GothamBold,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    TextTruncate = Enum.TextTruncate.AtEnd,
+    ZIndex = 9
+}, PlayerPanel)
+
+Create("TextLabel", {
+    Name = "PlayerRole",
+    Position = UDim2.fromOffset(57, 28),
+    Size = UDim2.new(1, -65, 0, 17),
+    BackgroundTransparency = 1,
+    Text = "CSS JAVA",
+    TextColor3 = COLORS.SecondaryText,
+    TextSize = 9,
+    Font = Enum.Font.GothamMedium,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 9
+}, PlayerPanel)
 
 --//==================================================
---// NAVIGATION SYSTEM
+--// MENU DATA
 --//==================================================
 
 local MenuItems = {
@@ -569,8 +1030,8 @@ local function SelectTab(index)
     CurrentSubtitle.Text = selected.Subtitle
 
     AimPage.Visible = (selected.Page == AimPage)
-    WhPage.Visible = (selected.Page == WhPage)
     MovementPage.Visible = (selected.Page == MovementPage)
+    WhPage.Visible = (selected.Page == WhPage)
     OtherPage.Visible = (selected.Page == OtherPage)
     SettingsPage.Visible = (selected.Page == SettingsPage)
 
@@ -642,9 +1103,27 @@ for index, data in ipairs(MenuItems) do
         ZIndex = 9
     }, Button)
 
-    Button.Activated:Connect(function() SelectTab(index) end)
+    Button.MouseEnter:Connect(function()
+        if index ~= 1 then
+            Tween(Button, { BackgroundTransparency = 0.7 })
+        end
+    end)
 
-    table.insert(MenuButtons, { Button = Button, Icon = Icon, Indicator = Indicator })
+    Button.MouseLeave:Connect(function()
+        if index ~= 1 then
+            Tween(Button, { BackgroundTransparency = 1 })
+        end
+    end)
+
+    Button.Activated:Connect(function()
+        SelectTab(index)
+    end)
+
+    table.insert(MenuButtons, {
+        Button = Button,
+        Icon = Icon,
+        Indicator = Indicator
+    })
 end
 
 SelectTab(1)
@@ -653,26 +1132,55 @@ SelectTab(1)
 --// RESPONSIVE SCALING & DRAGGING
 --//==================================================
 
+local Camera = workspace.CurrentCamera
+
 local function UpdateScale()
-    local Camera = workspace.CurrentCamera
+    Camera = workspace.CurrentCamera
     if not Camera then return end
+
     local viewport = Camera.ViewportSize
     local horizontalScale = (viewport.X - 20) / CONFIG.WindowSize.X
     local verticalScale = (viewport.Y - 20) / CONFIG.WindowSize.Y
-    UIScale.Scale = math.clamp(math.min(horizontalScale, verticalScale), CONFIG.MinScale, CONFIG.MaxScale)
+    local calculatedScale = math.clamp(math.min(horizontalScale, verticalScale), CONFIG.MinScale, CONFIG.MaxScale)
+
+    UIScale.Scale = calculatedScale
 end
 
 UpdateScale()
-workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateScale)
 
-local Dragging, DragStart, StartPosition = false, nil, nil
+if Camera then
+    Camera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateScale)
+end
+
+local Dragging = false
+local DragStart = nil
+local StartPosition = nil
+
+local function BeginDrag(input)
+    Dragging = true
+    DragStart = input.Position
+    StartPosition = MainFrame.Position
+end
+
+local function EndDrag()
+    Dragging = false
+    DragStart = nil
+    StartPosition = nil
+end
+
+local function UpdateDrag(input)
+    if not Dragging or not DragStart or not StartPosition then return end
+    local Delta = input.Position - DragStart
+    MainFrame.Position = UDim2.new(
+        StartPosition.X.Scale, StartPosition.X.Offset + Delta.X,
+        StartPosition.Y.Scale, StartPosition.Y.Offset + Delta.Y
+    )
+end
 
 local function ConnectDrag(object)
     object.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            Dragging = true
-            DragStart = input.Position
-            StartPosition = MainFrame.Position
+            BeginDrag(input)
         end
     end)
 end
@@ -682,22 +1190,18 @@ ConnectDrag(DragButton)
 
 UserInputService.InputChanged:Connect(function(input)
     if Dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - DragStart
-        MainFrame.Position = UDim2.new(
-            StartPosition.X.Scale, StartPosition.X.Offset + delta.X,
-            StartPosition.Y.Scale, StartPosition.Y.Offset + delta.Y
-        )
+        UpdateDrag(input)
     end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-        Dragging = false
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and Dragging then
+        EndDrag()
     end
 end)
 
 --//==================================================
---// REOPEN BUTTON SYSTEM
+--// REOPEN BUTTON
 --//==================================================
 
 local Closed = false
@@ -721,7 +1225,10 @@ local ReopenButton = Create("TextButton", {
 AddCorner(ReopenButton, 29)
 AddStroke(ReopenButton, COLORS.White, 0.75, 1)
 
-local ReopenDragging, ReopenDragStart, ReopenStartPosition, ReopenHasMoved = false, nil, nil, false
+local ReopenDragging = false
+local ReopenDragStart = nil
+local ReopenStartPosition = nil
+local ReopenHasMoved = false
 
 ReopenButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -729,6 +1236,7 @@ ReopenButton.InputBegan:Connect(function(input)
         ReopenDragStart = input.Position
         ReopenStartPosition = ReopenButton.Position
         ReopenHasMoved = false
+        
         ReopenButton.AnchorPoint = Vector2.new(0, 0)
     end
 end)
@@ -736,7 +1244,9 @@ end)
 UserInputService.InputChanged:Connect(function(input)
     if ReopenDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local delta = input.Position - ReopenDragStart
-        if delta.Magnitude > 5 then ReopenHasMoved = true end
+        if delta.Magnitude > 5 then
+            ReopenHasMoved = true
+        end
         ReopenButton.Position = UDim2.new(
             ReopenStartPosition.X.Scale, ReopenStartPosition.X.Offset + delta.X,
             ReopenStartPosition.Y.Scale, ReopenStartPosition.Y.Offset + delta.Y
@@ -745,7 +1255,7 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and ReopenDragging then
         ReopenDragging = false
     end
 end)
@@ -753,8 +1263,13 @@ end)
 CloseButton.Activated:Connect(function()
     if Closed then return end
     Closed = true
+
     BackgroundLayer.Visible = false
-    Tween(MainFrame, { Size = UDim2.fromOffset(CONFIG.WindowSize.X * 0.92, CONFIG.WindowSize.Y * 0.92) }, 0.15)
+
+    Tween(MainFrame, {
+        Size = UDim2.fromOffset(CONFIG.WindowSize.X * 0.92, CONFIG.WindowSize.Y * 0.92)
+    }, 0.15)
+
     task.wait(0.12)
     MainFrame.Visible = false
     DragButton.Visible = false
@@ -762,14 +1277,25 @@ CloseButton.Activated:Connect(function()
 end)
 
 ReopenButton.Activated:Connect(function()
-    if ReopenHasMoved then ReopenHasMoved = false; return end
+    if ReopenHasMoved then 
+        ReopenHasMoved = false
+        return 
+    end
+
     Closed = false
+    
     BackgroundLayer.Visible = true
+    
     MainFrame.Visible = true
     DragButton.Visible = true
-    Tween(MainFrame, { Size = UDim2.fromOffset(CONFIG.WindowSize.X, CONFIG.WindowSize.Y) }, 0.18)
+    MainFrame.Size = UDim2.fromOffset(CONFIG.WindowSize.X * 0.92, CONFIG.WindowSize.Y * 0.92)
+
+    Tween(MainFrame, {
+        Size = UDim2.fromOffset(CONFIG.WindowSize.X, CONFIG.WindowSize.Y)
+    }, 0.18)
+
     ReopenButton.Visible = false
     task.defer(UpdateScale)
 end)
 
-print("[CSS JAVA] Full script successfully loaded!")
+print("[CSS JAVA] Script fully updated with WH Dropdown settings!")
