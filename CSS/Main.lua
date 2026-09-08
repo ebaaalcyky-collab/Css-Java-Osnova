@@ -1,7 +1,6 @@
 --// CSS JAVA - Visual redesign
 --// Window size locked: 1000 x 620
---// Custom geometric icons + bold type
---// UI only. No gameplay hooks.
+--// Home + session balance + cleaned Aim tab
 
 local RAW_BASE = "https://raw.githubusercontent.com/ebaaalcyky-collab/Css-Java-Osnova/main/assets/"
 
@@ -9,6 +8,9 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+local Stats = game:GetService("Stats")
+local MarketplaceService = game:GetService("MarketplaceService")
 local Player = Players.LocalPlayer
 
 local CONFIG = {
@@ -30,7 +32,9 @@ local COLORS = {
     Dim = Color3.fromRGB(158, 164, 180),
     Mute = Color3.fromRGB(96, 102, 118),
     Line = Color3.fromRGB(255, 255, 255),
-    Off = Color3.fromRGB(40, 44, 58)
+    Off = Color3.fromRGB(40, 44, 58),
+    Plus = Color3.fromRGB(80, 220, 140),
+    Minus = Color3.fromRGB(255, 92, 108)
 }
 
 local FONT = Enum.Font.GothamBold
@@ -92,7 +96,19 @@ local function PaintIcon(parent, kind, color)
         ZIndex = 12
     }, parent)
 
-    if kind == "aim" then
+    if kind == "home" then
+        Pixel(box, UDim2.fromOffset(3, 11), UDim2.fromOffset(16, 9), color, 13)
+        local roof = Create("Frame", {
+            Position = UDim2.fromOffset(2, 6),
+            Size = UDim2.fromOffset(18, 8),
+            Rotation = 45,
+            BackgroundColor3 = color,
+            BorderSizePixel = 0,
+            ZIndex = 12
+        }, box)
+        Corner(roof, 2)
+        Pixel(box, UDim2.fromOffset(9, 13), UDim2.fromOffset(4, 7), COLORS.Side, 14)
+    elseif kind == "aim" then
         local ring = Create("Frame", {
             AnchorPoint = Vector2.new(0.5, 0.5),
             Position = UDim2.fromScale(0.5, 0.5),
@@ -241,14 +257,6 @@ Create("Frame", {
     ZIndex = 30
 }, MainFrame)
 
-Create("Frame", {
-    Size = UDim2.new(1, 0, 0, 1),
-    BackgroundColor3 = COLORS.Line,
-    BackgroundTransparency = 0.86,
-    BorderSizePixel = 0,
-    ZIndex = 30
-}, MainFrame)
-
 local Sidebar = Create("Frame", {
     Size = UDim2.new(0, CONFIG.SidebarWidth, 1, 0),
     BackgroundColor3 = COLORS.Side,
@@ -307,13 +315,13 @@ Create("TextLabel", {
 }, Brand)
 
 local MenuContainer = Create("Frame", {
-    Position = UDim2.fromOffset(16, 100),
-    Size = UDim2.new(1, -32, 0, 320),
+    Position = UDim2.fromOffset(16, 96),
+    Size = UDim2.new(1, -32, 0, 360),
     BackgroundTransparency = 1,
     ZIndex = 7
 }, Sidebar)
 Create("UIListLayout", {
-    Padding = UDim.new(0, 8),
+    Padding = UDim.new(0, 7),
     SortOrder = Enum.SortOrder.LayoutOrder
 }, MenuContainer)
 
@@ -334,7 +342,7 @@ local TopBar = Create("Frame", {
 local CurrentTitle = Create("TextLabel", {
     Size = UDim2.new(1, -100, 0, 32),
     BackgroundTransparency = 1,
-    Text = "Aim",
+    Text = "Home",
     TextColor3 = COLORS.Text,
     TextSize = 28,
     Font = FONT,
@@ -346,7 +354,7 @@ local CurrentSubtitle = Create("TextLabel", {
     Position = UDim2.fromOffset(0, 34),
     Size = UDim2.new(1, -100, 0, 18),
     BackgroundTransparency = 1,
-    Text = "TARGETING",
+    Text = "SESSION",
     TextColor3 = COLORS.Dim,
     TextSize = 12,
     Font = FONT,
@@ -435,7 +443,7 @@ local function Heading(parent, text)
     }, parent)
 end
 
-local function CreateToggle(parent, text, y)
+local function StatLine(parent, y, labelText)
     local row = Create("Frame", {
         Position = UDim2.fromOffset(24, y),
         Size = UDim2.new(1, -48, 0, 46),
@@ -448,95 +456,114 @@ local function CreateToggle(parent, text, y)
 
     Create("TextLabel", {
         Position = UDim2.fromOffset(14, 0),
-        Size = UDim2.new(1, -80, 1, 0),
+        Size = UDim2.new(0.4, 0, 1, 0),
         BackgroundTransparency = 1,
-        Text = text,
-        TextColor3 = COLORS.Text,
-        TextSize = 14,
+        Text = labelText,
+        TextColor3 = COLORS.Dim,
+        TextSize = 13,
         Font = FONT,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 11
     }, row)
 
-    local toggle = Create("TextButton", {
-        AnchorPoint = Vector2.new(1, 0.5),
-        Position = UDim2.new(1, -12, 0.5, 0),
-        Size = UDim2.fromOffset(50, 26),
-        BackgroundColor3 = COLORS.Off,
-        BorderSizePixel = 0,
-        Text = "",
-        AutoButtonColor = false,
+    local value = Create("TextLabel", {
+        Position = UDim2.fromOffset(0, 0),
+        Size = UDim2.new(1, -14, 1, 0),
+        BackgroundTransparency = 1,
+        Text = "—",
+        TextColor3 = COLORS.Text,
+        TextSize = 14,
+        Font = FONT,
+        TextXAlignment = Enum.TextXAlignment.Right,
+        TextTruncate = Enum.TextTruncate.AtEnd,
         ZIndex = 11
     }, row)
-    Corner(toggle, 13)
 
-    local circle = Create("Frame", {
-        AnchorPoint = Vector2.new(0, 0.5),
-        Position = UDim2.new(0, 3, 0.5, 0),
-        Size = UDim2.fromOffset(20, 20),
-        BackgroundColor3 = COLORS.Dim,
-        BorderSizePixel = 0,
-        ZIndex = 12
-    }, toggle)
-    Corner(circle, 10)
-
-    local state = false
-    toggle.Activated:Connect(function()
-        state = not state
-        if state then
-            Tween(toggle, { BackgroundColor3 = COLORS.Accent })
-            Tween(circle, { Position = UDim2.new(1, -23, 0.5, 0), BackgroundColor3 = COLORS.Text })
-        else
-            Tween(toggle, { BackgroundColor3 = COLORS.Off })
-            Tween(circle, { Position = UDim2.new(0, 3, 0.5, 0), BackgroundColor3 = COLORS.Dim })
-        end
-    end)
+    return value
 end
 
-local AimPage = Create("Frame", {
+-- HOME
+local HomePage = Create("Frame", {
     Size = UDim2.fromScale(1, 1),
     BackgroundTransparency = 1,
     Visible = true,
     ZIndex = 4
 }, PagesFolder)
 
-local AimCard = Card(AimPage, "AimCard", UDim2.fromOffset(28, 92), UDim2.new(0.58, -36, 0, 292))
+local ProfileCard = Card(HomePage, "ProfileCard", UDim2.fromOffset(28, 92), UDim2.new(0.42, -36, 0, 392))
+Badge(ProfileCard, "PLAYER")
+Heading(ProfileCard, "Profile")
+
+local Avatar = Create("ImageLabel", {
+    Position = UDim2.fromOffset(24, 78),
+    Size = UDim2.fromOffset(96, 96),
+    BackgroundColor3 = COLORS.CardInner,
+    BorderSizePixel = 0,
+    Image = "",
+    ScaleType = Enum.ScaleType.Crop,
+    ZIndex = 10
+}, ProfileCard)
+Corner(Avatar, 18)
+Stroke(Avatar, COLORS.Accent, 0.45, 1)
+
+local HomeName = Create("TextLabel", {
+    Position = UDim2.fromOffset(24, 186),
+    Size = UDim2.new(1, -48, 0, 28),
+    BackgroundTransparency = 1,
+    Text = Player and Player.Name or "Player",
+    TextColor3 = COLORS.Text,
+    TextSize = 18,
+    Font = FONT,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    TextTruncate = Enum.TextTruncate.AtEnd,
+    ZIndex = 10
+}, ProfileCard)
+
+local HomeId = Create("TextLabel", {
+    Position = UDim2.fromOffset(24, 214),
+    Size = UDim2.new(1, -48, 0, 20),
+    BackgroundTransparency = 1,
+    Text = "ID " .. tostring(Player and Player.UserId or 0),
+    TextColor3 = COLORS.Mute,
+    TextSize = 12,
+    Font = FONT,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 10
+}, ProfileCard)
+
+local StatsCard = Card(HomePage, "StatsCard", UDim2.new(0.42, 8, 0, 92), UDim2.new(0.58, -36, 0, 392))
+Badge(StatsCard, "SESSION")
+Heading(StatsCard, "Live info")
+
+local GameValue = StatLine(StatsCard, 78, "Game")
+local FpsValue = StatLine(StatsCard, 132, "FPS")
+local PingValue = StatLine(StatsCard, 186, "Ping")
+local PlaceValue = StatLine(StatsCard, 240, "Place")
+
+-- AIM cleaned
+local AimPage = Create("Frame", {
+    Size = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    Visible = false,
+    ZIndex = 4
+}, PagesFolder)
+local AimCard = Card(AimPage, "AimCard", UDim2.fromOffset(28, 92), UDim2.new(1, -56, 0, 392))
 Badge(AimCard, "AIM")
 Heading(AimCard, "Targeting")
-CreateToggle(AimCard, "Enabled", 78)
-CreateToggle(AimCard, "Preview", 132)
-CreateToggle(AimCard, "Advanced", 186)
-
-local SideCard = Card(AimPage, "SideCard", UDim2.new(0.58, 8, 0, 92), UDim2.new(0.42, -36, 0, 292))
-Badge(SideCard, "LAYOUT")
-Heading(SideCard, "Panel")
 Create("TextLabel", {
     Position = UDim2.fromOffset(24, 78),
-    Size = UDim2.new(1, -48, 0, 180),
+    Size = UDim2.new(1, -48, 0, 80),
     BackgroundTransparency = 1,
-    Text = "1000 x 620\nBold Gotham\nCustom marks\nGlass panels",
+    Text = "This tab is empty for now.",
     TextColor3 = COLORS.Dim,
     TextSize = 16,
     Font = FONT,
     TextXAlignment = Enum.TextXAlignment.Left,
     TextYAlignment = Enum.TextYAlignment.Top,
     ZIndex = 10
-}, SideCard)
+}, AimCard)
 
-local FootCard = Card(AimPage, "FootCard", UDim2.fromOffset(28, 400), UDim2.new(1, -56, 0, 84))
-Badge(FootCard, "STATUS")
-Create("TextLabel", {
-    Position = UDim2.fromOffset(24, 38),
-    Size = UDim2.new(1, -48, 0, 28),
-    BackgroundTransparency = 1,
-    Text = "Interface ready",
-    TextColor3 = COLORS.Text,
-    TextSize = 18,
-    Font = FONT,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 10
-}, FootCard)
-
+-- WH placeholder page kept
 local WhPage = Create("Frame", {
     Size = UDim2.fromScale(1, 1),
     BackgroundTransparency = 1,
@@ -546,51 +573,40 @@ local WhPage = Create("Frame", {
 local WhCard = Card(WhPage, "WhCard", UDim2.fromOffset(28, 92), UDim2.new(1, -56, 0, 140))
 Badge(WhCard, "VISUALS")
 Heading(WhCard, "Display")
-CreateToggle(WhCard, "Highlights", 78)
 
-local Drop = Create("TextButton", {
-    Position = UDim2.fromOffset(24, 132),
-    Size = UDim2.new(1, -48, 0, 20),
-    BackgroundTransparency = 1,
-    Text = "MORE OPTIONS    v",
-    TextColor3 = COLORS.Mute,
-    TextSize = 12,
-    Font = FONT,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 11
-}, WhCard)
-
-local Sub = Create("Frame", {
-    Position = UDim2.fromOffset(12, 156),
-    Size = UDim2.new(1, -24, 0, 200),
-    BackgroundTransparency = 1,
-    ZIndex = 10
-}, WhCard)
-CreateToggle(Sub, "Roles", 0)
-CreateToggle(Sub, "Health", 52)
-CreateToggle(Sub, "Armor", 104)
-CreateToggle(Sub, "Distance", 156)
-
-local opened = false
-Drop.Activated:Connect(function()
-    opened = not opened
-    Drop.Text = opened and "MORE OPTIONS    ^" or "MORE OPTIONS    v"
-    Tween(WhCard, { Size = opened and UDim2.new(1, -56, 0, 372) or UDim2.new(1, -56, 0, 140) }, 0.2)
-end)
-
+-- MOVEMENT placeholder
 local MovementPage = Create("Frame", {
     Size = UDim2.fromScale(1, 1),
     BackgroundTransparency = 1,
     Visible = false,
     ZIndex = 4
 }, PagesFolder)
-local MovementCard = Card(MovementPage, "MoveCard", UDim2.fromOffset(28, 92), UDim2.new(1, -56, 0, 168))
+local MovementCard = Card(MovementPage, "MoveCard", UDim2.fromOffset(28, 92), UDim2.new(1, -56, 0, 140))
 Badge(MovementCard, "MOVEMENT")
 Heading(MovementCard, "Motion")
-CreateToggle(MovementCard, "Faster walk", 78)
 
-local OtherPage = Create("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, PagesFolder)
-local SettingsPage = Create("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, PagesFolder)
+-- OTHER + balance
+local OtherPage = Create("Frame", {
+    Size = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    Visible = false,
+    ZIndex = 4
+}, PagesFolder)
+
+local BalanceCard = Card(OtherPage, "BalanceCard", UDim2.fromOffset(28, 92), UDim2.new(1, -56, 0, 392))
+Badge(BalanceCard, "MONEY")
+Heading(BalanceCard, "Balance info")
+
+local StartValue = StatLine(BalanceCard, 78, "Started")
+local NowValue = StatLine(BalanceCard, 132, "Now")
+local DiffValue = StatLine(BalanceCard, 186, "Session")
+local SourceValue = StatLine(BalanceCard, 240, "Source")
+
+local SettingsPage = Create("Frame", {
+    Size = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    Visible = false
+}, PagesFolder)
 
 local PlayerPanel = Create("Frame", {
     AnchorPoint = Vector2.new(0, 1),
@@ -603,23 +619,16 @@ local PlayerPanel = Create("Frame", {
 Corner(PlayerPanel, 16)
 Stroke(PlayerPanel, COLORS.Line, 0.9, 1)
 
-local Ava = Create("Frame", {
+local MiniAva = Create("ImageLabel", {
     Position = UDim2.fromOffset(10, 11),
     Size = UDim2.fromOffset(40, 40),
     BackgroundColor3 = COLORS.Accent,
     BorderSizePixel = 0,
+    Image = "",
+    ScaleType = Enum.ScaleType.Crop,
     ZIndex = 9
 }, PlayerPanel)
-Corner(Ava, 20)
-Create("TextLabel", {
-    Size = UDim2.fromScale(1, 1),
-    BackgroundTransparency = 1,
-    Text = string.sub(Player and Player.Name or "P", 1, 1),
-    TextColor3 = COLORS.Text,
-    TextSize = 18,
-    Font = FONT,
-    ZIndex = 10
-}, Ava)
+Corner(MiniAva, 20)
 
 Create("TextLabel", {
     Position = UDim2.fromOffset(58, 12),
@@ -647,6 +656,7 @@ Create("TextLabel", {
 }, PlayerPanel)
 
 local MenuItems = {
+    { Name = "Home", Sub = "SESSION", Kind = "home", Page = HomePage },
     { Name = "Aim", Sub = "TARGETING", Kind = "aim", Page = AimPage },
     { Name = "Visuals", Sub = "DISPLAY", Kind = "wh", Page = WhPage },
     { Name = "Movement", Sub = "MOTION", Kind = "move", Page = MovementPage },
@@ -660,6 +670,7 @@ local function SelectTab(index)
     local selected = MenuItems[index]
     CurrentTitle.Text = selected.Name
     CurrentSubtitle.Text = selected.Sub
+    HomePage.Visible = selected.Page == HomePage
     AimPage.Visible = selected.Page == AimPage
     WhPage.Visible = selected.Page == WhPage
     MovementPage.Visible = selected.Page == MovementPage
@@ -679,7 +690,7 @@ end
 
 for index, data in ipairs(MenuItems) do
     local button = Create("TextButton", {
-        Size = UDim2.new(1, 0, 0, 48),
+        Size = UDim2.new(1, 0, 0, 44),
         BackgroundColor3 = COLORS.Card,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
@@ -691,7 +702,7 @@ for index, data in ipairs(MenuItems) do
     Corner(button, 14)
 
     local icon = PaintIcon(button, data.Kind, COLORS.Dim)
-    icon.Position = UDim2.fromOffset(14, 13)
+    icon.Position = UDim2.fromOffset(14, 11)
 
     local label = Create("TextLabel", {
         Position = UDim2.fromOffset(46, 0),
@@ -699,7 +710,7 @@ for index, data in ipairs(MenuItems) do
         BackgroundTransparency = 1,
         Text = data.Name,
         TextColor3 = COLORS.Dim,
-        TextSize = 14,
+        TextSize = 13,
         Font = FONT,
         TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 9
@@ -723,6 +734,178 @@ for index, data in ipairs(MenuItems) do
 end
 
 SelectTab(1)
+
+-- Avatar
+task.spawn(function()
+    local ok, url = pcall(function()
+        return Players:GetUserThumbnailAsync(
+            Player.UserId,
+            Enum.ThumbnailType.HeadShot,
+            Enum.ThumbnailSize.Size150x150
+        )
+    end)
+    if ok and url then
+        Avatar.Image = url
+        MiniAva.Image = url
+    end
+end)
+
+-- Game name
+task.spawn(function()
+    PlaceValue.Text = tostring(game.PlaceId)
+    local ok, info = pcall(function()
+        return MarketplaceService:GetProductInfo(game.PlaceId)
+    end)
+    if ok and info and info.Name then
+        GameValue.Text = info.Name
+    else
+        GameValue.Text = game.Name
+    end
+end)
+
+-- FPS / ping
+local fpsAcc, fpsFrames = 0, 0
+RunService.RenderStepped:Connect(function(dt)
+    fpsAcc += dt
+    fpsFrames += 1
+    if fpsAcc >= 0.25 then
+        FpsValue.Text = tostring(math.floor(fpsFrames / fpsAcc + 0.5))
+        fpsAcc = 0
+        fpsFrames = 0
+    end
+
+    local ping = 0
+    local okPing, result = pcall(function()
+        return math.floor(Player:GetNetworkPing() * 1000 + 0.5)
+    end)
+    if okPing and typeof(result) == "number" then
+        ping = result
+    else
+        pcall(function()
+            local item = Stats.Network.ServerStatsItem["Data Ping"]
+            if item then
+                ping = math.floor(item:GetValue() + 0.5)
+            end
+        end)
+    end
+    PingValue.Text = ping .. " ms"
+end)
+
+-- Money session tracker
+local MONEY_NAMES = {
+    "Cash", "Money", "Dollars", "Dollar", "Balance", "Bank",
+    "Wallet", "Coins", "Gold", "Dough", "Currency", "MoneyValue"
+}
+
+local function isMoneyName(name)
+    local lower = string.lower(name)
+    for _, key in ipairs(MONEY_NAMES) do
+        if lower == string.lower(key) or string.find(lower, string.lower(key), 1, true) then
+            return true
+        end
+    end
+    return false
+end
+
+local function readNumber(obj)
+    if not obj then return nil end
+    if obj:IsA("IntValue") or obj:IsA("NumberValue") or obj:IsA("DoubleConstrainedValue") or obj:IsA("IntConstrainedValue") then
+        return tonumber(obj.Value)
+    end
+    if obj:IsA("StringValue") then
+        local n = tonumber((tostring(obj.Value):gsub("[^0-9%-%.]", "")))
+        return n
+    end
+    return nil
+end
+
+local function findMoney()
+    local best, source = nil, nil
+    local function consider(obj, label)
+        local n = readNumber(obj)
+        if n ~= nil then
+            best = n
+            source = label
+        end
+    end
+
+    local ls = Player:FindFirstChild("leaderstats")
+    if ls then
+        for _, child in ipairs(ls:GetChildren()) do
+            if isMoneyName(child.Name) then
+                consider(child, "leaderstats." .. child.Name)
+            end
+        end
+        if not source then
+            for _, child in ipairs(ls:GetChildren()) do
+                if readNumber(child) ~= nil then
+                    consider(child, "leaderstats." .. child.Name)
+                end
+            end
+        end
+    end
+
+    if not source then
+        for _, child in ipairs(Player:GetChildren()) do
+            if isMoneyName(child.Name) then
+                consider(child, "player." .. child.Name)
+            end
+        end
+    end
+
+    return best, source
+end
+
+local startMoney = nil
+local lastSource = "—"
+
+local function formatMoney(n)
+    n = math.floor(n + 0.5)
+    local sign = n < 0 and "-" or ""
+    local s = tostring(math.abs(n))
+    local out = s
+    while true do
+        local nexts, count = string.gsub(out, "^(-?%d+)(%d%d%d)", "%1 %2")
+        out = nexts
+        if count == 0 then break end
+    end
+    return sign .. out
+end
+
+task.spawn(function()
+    while true do
+        local now, source = findMoney()
+        if now ~= nil then
+            if startMoney == nil then
+                startMoney = now
+            end
+            lastSource = source or "—"
+            local diff = now - startMoney
+
+            StartValue.Text = formatMoney(startMoney) .. "$"
+            NowValue.Text = formatMoney(now) .. "$"
+            SourceValue.Text = lastSource
+
+            if diff > 0 then
+                DiffValue.Text = "+" .. formatMoney(diff) .. "$"
+                DiffValue.TextColor3 = COLORS.Plus
+            elseif diff < 0 then
+                DiffValue.Text = "-" .. formatMoney(math.abs(diff)) .. "$"
+                DiffValue.TextColor3 = COLORS.Minus
+            else
+                DiffValue.Text = "0$"
+                DiffValue.TextColor3 = COLORS.Text
+            end
+        else
+            StartValue.Text = "—"
+            NowValue.Text = "—"
+            DiffValue.Text = "waiting"
+            DiffValue.TextColor3 = COLORS.Mute
+            SourceValue.Text = "not found"
+        end
+        task.wait(0.25)
+    end
+end)
 
 local cam = workspace.CurrentCamera
 local function UpdateScale()
@@ -775,7 +958,6 @@ local reopen = Create("TextButton", {
     ZIndex = 100
 }, ScreenGui)
 Corner(reopen, 18)
-Stroke(reopen, COLORS.Line, 0.7, 1)
 
 local rDrag, rStart, rPos, rMoved = false, nil, nil, false
 reopen.InputBegan:Connect(function(input)
@@ -821,4 +1003,4 @@ reopen.Activated:Connect(function()
     task.defer(UpdateScale)
 end)
 
-print("[CSS JAVA] Redesign loaded | 1000x620 | bold + custom icons")
+print("[CSS JAVA] Home + session balance loaded")
