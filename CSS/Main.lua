@@ -33,7 +33,14 @@ local CONFIG = {
 
     CornerRadius = 16,
 
-    BackgroundTransparency = 0.28,
+    -- FIX:
+    -- Было 0.28, из-за чего background.png был прозрачным.
+    BackgroundTransparency = 0,
+
+    -- FIX:
+    -- Чем меньше значение, тем сильнее затемнение фона.
+    -- 0.70 = лёгкое затемнение.
+    BackgroundOverlayTransparency = 0.70,
 
     SidebarWidth = 225,
 
@@ -46,7 +53,11 @@ local CONFIG = {
 
 local COLORS = {
     Background = Color3.fromRGB(9, 10, 14),
+
+    -- FIX:
+    -- Панели слегка прозрачные, чтобы фон был виден.
     Panel = Color3.fromRGB(14, 16, 22),
+
     Sidebar = Color3.fromRGB(11, 13, 18),
 
     Card = Color3.fromRGB(20, 23, 31),
@@ -149,6 +160,68 @@ local UIScale = Create("UIScale", {
 })
 
 --//==================================================
+--// BACKGROUND LAYER
+--//==================================================
+
+-- FIX:
+-- Фон теперь НЕ находится внутри MainFrame.
+-- Поэтому MainFrame больше не может скрыть background.png.
+
+local BackgroundLayer = Create("Frame", {
+    Name = "BackgroundLayer",
+
+    Position = UDim2.fromScale(0, 0),
+    Size = UDim2.fromScale(1, 1),
+
+    BackgroundTransparency = 1,
+
+    BorderSizePixel = 0,
+
+    ZIndex = 0
+}, ScreenGui)
+
+local Background = Create("ImageLabel", {
+    Name = "Background",
+
+    Position = UDim2.fromScale(0, 0),
+    Size = UDim2.fromScale(1, 1),
+
+    BackgroundTransparency = 1,
+
+    Image = ASSETS.background,
+
+    -- FIX:
+    -- Раньше было 90,90,100.
+    -- Это серило изображение.
+    ImageColor3 = Color3.fromRGB(255, 255, 255),
+
+    ImageTransparency = CONFIG.BackgroundTransparency,
+
+    ScaleType = Enum.ScaleType.Crop,
+
+    BorderSizePixel = 0,
+
+    ZIndex = 0
+}, BackgroundLayer)
+
+-- FIX:
+-- Лёгкое затемнение поверх background.png.
+local BackgroundOverlay = Create("Frame", {
+    Name = "BackgroundOverlay",
+
+    Position = UDim2.fromScale(0, 0),
+    Size = UDim2.fromScale(1, 1),
+
+    BackgroundColor3 = Color3.fromRGB(5, 6, 9),
+
+    BackgroundTransparency = CONFIG.BackgroundOverlayTransparency,
+
+    BorderSizePixel = 0,
+
+    ZIndex = 1
+}, BackgroundLayer)
+
+--//==================================================
 --// MAIN WINDOW
 --//==================================================
 
@@ -164,12 +237,18 @@ local MainFrame = Create("Frame", {
         CONFIG.WindowSize.Y
     ),
 
+    -- FIX:
+    -- Было 0.04.
+    -- Теперь основная область окна прозрачная,
+    -- а отдельные панели сами имеют свои цвета.
     BackgroundColor3 = COLORS.Panel,
-    BackgroundTransparency = 0.04,
+    BackgroundTransparency = 1,
 
     BorderSizePixel = 0,
 
-    ClipsDescendants = true
+    ClipsDescendants = true,
+
+    ZIndex = 3
 }, ScreenGui)
 
 UIScale.Parent = MainFrame
@@ -178,43 +257,28 @@ AddCorner(MainFrame, CONFIG.CornerRadius)
 AddStroke(MainFrame, COLORS.Border, 0.2, 1)
 
 --//==================================================
---// BACKGROUND
+--// WINDOW BACKDROP
 --//==================================================
 
-local Background = Create("ImageLabel", {
-    Name = "Background",
+-- FIX:
+-- Если хочется чуть затемнить именно область окна,
+-- используется отдельный слой.
+local WindowBackdrop = Create("Frame", {
+    Name = "WindowBackdrop",
 
     Position = UDim2.fromScale(0, 0),
     Size = UDim2.fromScale(1, 1),
 
-    BackgroundTransparency = 1,
+    BackgroundColor3 = COLORS.Panel,
 
-    Image = ASSETS.background,
-
-    ImageColor3 = Color3.fromRGB(90, 90, 100),
-
-    ImageTransparency = CONFIG.BackgroundTransparency,
-
-    ScaleType = Enum.ScaleType.Crop,
-
-    ZIndex = 0
-}, MainFrame)
-
--- dark overlay
-local BackgroundOverlay = Create("Frame", {
-    Name = "BackgroundOverlay",
-
-    Position = UDim2.fromScale(0, 0),
-    Size = UDim2.fromScale(1, 1),
-
-    BackgroundColor3 = Color3.fromRGB(5, 6, 9),
-
-    BackgroundTransparency = 0.27,
+    BackgroundTransparency = 0.72,
 
     BorderSizePixel = 0,
 
-    ZIndex = 1
+    ZIndex = 2
 }, MainFrame)
+
+AddCorner(WindowBackdrop, CONFIG.CornerRadius)
 
 --//==================================================
 --// SIDEBAR
@@ -525,6 +589,9 @@ local SettingsCard = Create("Frame", {
 
     BackgroundColor3 = COLORS.Card,
 
+    -- FIX:
+    -- Было 0.08. Оставляем лёгкую прозрачность,
+    -- чтобы background немного просвечивал.
     BackgroundTransparency = 0.08,
 
     BorderSizePixel = 0,
@@ -587,7 +654,10 @@ local function CreateToggle(parent, text, order)
     local Row = Create("Frame", {
         Name = text .. "Row",
 
-        Position = UDim2.fromOffset(20, 72 + ((order - 1) * 52)),
+        Position = UDim2.fromOffset(
+            20,
+            72 + ((order - 1) * 52)
+        ),
 
         Size = UDim2.new(1, -40, 0, 44),
 
@@ -747,7 +817,7 @@ local InfoText = Create("TextLabel", {
 
     BackgroundTransparency = 1,
 
-    Text = "This panel is a clean GUI foundation.\\nAll controls are visual placeholders.",
+    Text = "This panel is a clean GUI foundation.\nAll controls are visual placeholders.",
 
     TextColor3 = COLORS.SecondaryText,
 
@@ -1054,6 +1124,8 @@ SelectTab(1)
 local Camera = workspace.CurrentCamera
 
 local function UpdateScale()
+    Camera = workspace.CurrentCamera
+
     if not Camera then
         return
     end
@@ -1143,10 +1215,7 @@ local function ConnectDrag(object)
     end)
 end
 
--- Main top area can be dragged
 ConnectDrag(TopBar)
-
--- Dedicated circular/drag button
 ConnectDrag(DragButton)
 
 --//==================================================
@@ -1156,6 +1225,10 @@ ConnectDrag(DragButton)
 local Closed = false
 
 CloseButton.Activated:Connect(function()
+    if Closed then
+        return
+    end
+
     Closed = true
 
     Tween(MainFrame, {
@@ -1169,9 +1242,13 @@ CloseButton.Activated:Connect(function()
 
     MainFrame.Visible = false
     DragButton.Visible = false
+    ReopenButton.Visible = true
 end)
 
--- Floating reopen button
+--//==================================================
+--// REOPEN BUTTON
+--//==================================================
+
 local ReopenButton = Create("TextButton", {
     Name = "ReopenButton",
 
@@ -1226,15 +1303,13 @@ ReopenButton.Activated:Connect(function()
     task.defer(UpdateScale)
 end)
 
-CloseButton.Activated:Connect(function()
-    ReopenButton.Visible = true
-end)
-
 --//==================================================
 --// KEEP WINDOW WITHIN SCREEN
 --//==================================================
 
 local function ClampWindow()
+    Camera = workspace.CurrentCamera
+
     if not Camera then
         return
     end
@@ -1258,8 +1333,17 @@ local function ClampWindow()
     local minY = halfHeight + 5
     local maxY = viewport.Y - halfHeight - 5
 
-    local targetX = math.clamp(x, minX, math.max(minX, maxX))
-    local targetY = math.clamp(y, minY, math.max(minY, maxY))
+    local targetX = math.clamp(
+        x,
+        minX,
+        math.max(minX, maxX)
+    )
+
+    local targetY = math.clamp(
+        y,
+        minY,
+        math.max(minY, maxY)
+    )
 
     MainFrame.Position = UDim2.fromOffset(
         targetX,
