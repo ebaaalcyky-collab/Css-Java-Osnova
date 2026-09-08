@@ -1,5 +1,5 @@
 --// CSS JAVA - Main.lua
---// GUI ONLY + SPEED HACK (33)
+--// GUI + SPEED HACK (33) + MOVABLE ICON + SMART ESP WITH DROPDOWN
 
 local RAW_BASE = "https://raw.githubusercontent.com/ebaaalcyky-collab/Css-Java-Osnova/main/assets/"
 
@@ -43,8 +43,73 @@ local CONFIG = {
 
     SidebarWidth = 225,
 
-    AnimationTime = 0.18
+    AnimationTime = 0.18,
+    
+    MaxEspDistance = 250 -- Максимальная дистанция работы ВХ (в метрах / studs)
 }
+
+--//==================================================
+--// TRANSLATIONS (РОЛИ НА РУССКОМ)
+--//==================================================
+
+local ROLE_TRANSLATIONS = {
+    ["police"] = "Полиция",
+    ["cop"] = "Полицейский",
+    ["sheriff"] = "Шериф",
+    ["deputy"] = "Помощник шерифа",
+    ["border patrol"] = "Погранслужба",
+    ["border"] = "Пограничник",
+    ["military"] = "Военный",
+    ["army"] = "Армия",
+    ["swat"] = "Спецназ",
+    ["fbi"] = "ФБР",
+    ["civilian"] = "Гражданский",
+    ["civ"] = "Гражданский",
+    ["citizen"] = "Житель",
+    ["criminal"] = "Преступник",
+    ["illegal"] = "Нелегал",
+    ["rebel"] = "Повстанец",
+    ["cartel"] = "Картель",
+    ["mafia"] = "Мафия",
+    ["gang"] = "Бандит",
+    ["prisoner"] = "Заключенный",
+    ["guard"] = "Охранник",
+    ["doctor"] = "Врач",
+    ["medic"] = "Медик",
+    ["firefighter"] = "Пожарный",
+    ["neutral"] = "Нейтрал"
+}
+
+local function GetRussianRole(plr)
+    local rawRole = ""
+    
+    if plr.Team then
+        rawRole = plr.Team.Name
+    end
+    
+    if rawRole == "" or rawRole == "Choosing" then
+        local ls = plr:FindFirstChild("leaderstats")
+        if ls then
+            local roleVal = ls:FindFirstChild("Role") or ls:FindFirstChild("Team") or ls:FindFirstChild("Job")
+            if roleVal then
+                rawRole = tostring(roleVal.Value)
+            end
+        end
+    end
+    
+    if rawRole == "" then
+        return "Игрок"
+    end
+    
+    local lower = string.lower(rawRole)
+    for key, ru in pairs(ROLE_TRANSLATIONS) do
+        if string.find(lower, key) then
+            return ru
+        end
+    end
+    
+    return rawRole
+end
 
 --//==================================================
 --// COLORS
@@ -64,7 +129,9 @@ local COLORS = {
     Border = Color3.fromRGB(42, 45, 56),
     ToggleOff = Color3.fromRGB(42, 45, 54),
     ToggleOn = Color3.fromRGB(130, 85, 255),
-    White = Color3.fromRGB(255, 255, 255)
+    White = Color3.fromRGB(255, 255, 255),
+    Health = Color3.fromRGB(46, 204, 113),
+    Armor = Color3.fromRGB(52, 152, 219)
 }
 
 --//==================================================
@@ -408,7 +475,7 @@ AddCorner(DragButton, 10)
 AddStroke(DragButton, COLORS.Border, 0.25, 1)
 
 --//==================================================
---// PAGES CONTAINER (FOR TABS)
+--// PAGES CONTAINER
 --//==================================================
 
 local PagesFolder = Create("Folder", {
@@ -419,10 +486,10 @@ local PagesFolder = Create("Folder", {
 --// HELPER TO CREATE TOGGLE
 --//==================================================
 
-local function CreateToggle(parent, text, order, callback)
+local function CreateToggle(parent, text, yOffset, callback)
     local Row = Create("Frame", {
         Name = text .. "Row",
-        Position = UDim2.fromOffset(20, 72 + ((order - 1) * 52)),
+        Position = UDim2.fromOffset(20, yOffset),
         Size = UDim2.new(1, -40, 0, 44),
         BackgroundTransparency = 1,
         ZIndex = 10
@@ -494,7 +561,7 @@ local function CreateToggle(parent, text, order, callback)
 end
 
 --//==================================================
---// CREATE PAGES (TABS CONTENT)
+--// PAGES CONTENT
 --//==================================================
 
 -- 1. AIM PAGE
@@ -533,24 +600,293 @@ Create("TextLabel", {
     ZIndex = 9
 }, AimCard)
 
-Create("TextLabel", {
-    Name = "CardDescription",
-    Position = UDim2.fromOffset(22, 43),
-    Size = UDim2.new(1, -44, 0, 20),
+CreateToggle(AimCard, "Enabled", 72)
+CreateToggle(AimCard, "Preview", 124)
+CreateToggle(AimCard, "Advanced", 176)
+
+
+-- 2. WH / VISUALS PAGE (ESP WITH DROPDOWN MENU)
+local WhPage = Create("Frame", {
+    Name = "WhPage",
+    Position = UDim2.fromOffset(0, 0),
+    Size = UDim2.fromScale(1, 1),
     BackgroundTransparency = 1,
-    Text = "Visual controls only — no gameplay functionality",
-    TextColor3 = COLORS.SecondaryText,
-    TextSize = 11,
-    Font = Enum.Font.GothamMedium,
+    Visible = false,
+    ZIndex = 4
+}, PagesFolder)
+
+local WhCard = Create("Frame", {
+    Name = "WhSettings",
+    Position = UDim2.fromOffset(30, 105),
+    Size = UDim2.new(1, -60, 0, 130),
+    BackgroundColor3 = COLORS.Card,
+    BackgroundTransparency = 0.08,
+    BorderSizePixel = 0,
+    ClipsDescendants = true,
+    ZIndex = 8
+}, WhPage)
+
+AddCorner(WhCard, 14)
+AddStroke(WhCard, COLORS.Border, 0.25, 1)
+
+Create("TextLabel", {
+    Name = "CardTitle",
+    Position = UDim2.fromOffset(22, 18),
+    Size = UDim2.new(1, -44, 0, 25),
+    BackgroundTransparency = 1,
+    Text = "VISUALS",
+    TextColor3 = COLORS.Text,
+    TextSize = 13,
+    Font = Enum.Font.GothamBold,
     TextXAlignment = Enum.TextXAlignment.Left,
     ZIndex = 9
-}, AimCard)
+}, WhCard)
 
-CreateToggle(AimCard, "Enabled", 1)
-CreateToggle(AimCard, "Preview", 2)
-CreateToggle(AimCard, "Advanced", 3)
+-- ESP SETTINGS STATE
+local ESP_SETTINGS = {
+    Enabled = false,
+    Roles = true,
+    Health = true,
+    Armor = true,
+    Distance = true
+}
 
--- 2. MOVEMENT PAGE (WITH SPEED-HACK = 33)
+-- MAIN ESP TOGGLE
+CreateToggle(WhCard, "Wh", 60, function(state)
+    ESP_SETTINGS.Enabled = state
+end)
+
+-- DROPDOWN ARROW BUTTON
+local DropdownButton = Create("TextButton", {
+    Name = "DropdownButton",
+    Position = UDim2.fromOffset(20, 108),
+    Size = UDim2.new(1, -40, 0, 18),
+    BackgroundTransparency = 1,
+    Text = "▼",
+    TextColor3 = COLORS.SecondaryText,
+    TextSize = 12,
+    Font = Enum.Font.GothamBold,
+    ZIndex = 11
+}, WhCard)
+
+local isDropdownOpen = false
+
+DropdownButton.Activated:Connect(function()
+    isDropdownOpen = not isDropdownOpen
+    if isDropdownOpen then
+        DropdownButton.Text = "▲"
+        Tween(WhCard, { Size = UDim2.new(1, -60, 0, 350) })
+    else
+        DropdownButton.Text = "▼"
+        Tween(WhCard, { Size = UDim2.new(1, -60, 0, 130) })
+    end
+end)
+
+-- DROPDOWN SUB-SETTINGS (ENGLISH NAMES)
+local SubContainer = Create("Frame", {
+    Name = "SubContainer",
+    Position = UDim2.fromOffset(20, 130),
+    Size = UDim2.new(1, -40, 0, 210),
+    BackgroundTransparency = 1,
+    ZIndex = 10
+}, WhCard)
+
+CreateToggle(SubContainer, "Roles", 0, function(state) ESP_SETTINGS.Roles = state end)
+CreateToggle(SubContainer, "Health Bar", 50, function(state) ESP_SETTINGS.Health = state end)
+CreateToggle(SubContainer, "Armor Bar", 100, function(state) ESP_SETTINGS.Armor = state end)
+CreateToggle(SubContainer, "Distance", 150, function(state) ESP_SETTINGS.Distance = state end)
+
+-- ESP ENGINE LOGIC
+local function ClearEsp(targetPlayer)
+    if targetPlayer and targetPlayer.Character then
+        local oldGui = targetPlayer.Character:FindFirstChild("CSS_ESP_GUI")
+        if oldGui then oldGui:Destroy() end
+        local oldHl = targetPlayer.Character:FindFirstChild("CSS_ESP_HL")
+        if oldHl then oldHl:Destroy() end
+    end
+end
+
+local function CreateEspForPlayer(plr)
+    if plr == Player then return end
+
+    local function ApplyEsp(character)
+        if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+        ClearEsp(plr)
+
+        -- Highlight
+        local hl = Instance.new("Highlight")
+        hl.Name = "CSS_ESP_HL"
+        hl.Adornee = character
+        hl.FillColor = COLORS.Accent
+        hl.FillTransparency = 0.6
+        hl.OutlineColor = COLORS.White
+        hl.OutlineTransparency = 0.1
+        hl.Enabled = false
+        hl.Parent = character
+
+        -- BillboardGui
+        local bb = Instance.new("BillboardGui")
+        bb.Name = "CSS_ESP_GUI"
+        bb.Adornee = character:FindFirstChild("Head") or character:FindFirstChild("HumanoidRootPart")
+        bb.Size = UDim2.fromOffset(160, 70)
+        bb.StudsOffset = Vector3.new(0, 3.2, 0)
+        bb.AlwaysOnTop = true
+        bb.Enabled = false
+
+        local container = Instance.new("Frame")
+        container.Name = "Container"
+        container.Size = UDim2.fromScale(1, 1)
+        container.BackgroundTransparency = 1
+        container.Parent = bb
+
+        -- Name
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Name = "NameLabel"
+        nameLabel.Size = UDim2.new(1, 0, 0, 16)
+        nameLabel.Position = UDim2.fromOffset(0, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = plr.Name
+        nameLabel.TextColor3 = COLORS.White
+        nameLabel.TextSize = 13
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.TextStrokeTransparency = 0.3
+        nameLabel.Parent = container
+
+        -- Role
+        local roleLabel = Instance.new("TextLabel")
+        roleLabel.Name = "RoleLabel"
+        roleLabel.Size = UDim2.new(1, 0, 0, 14)
+        roleLabel.Position = UDim2.fromOffset(0, 16)
+        roleLabel.BackgroundTransparency = 1
+        roleLabel.Text = "[" .. GetRussianRole(plr) .. "]"
+        roleLabel.TextColor3 = COLORS.Accent
+        roleLabel.TextSize = 11
+        roleLabel.Font = Enum.Font.GothamMedium
+        roleLabel.TextStrokeTransparency = 0.4
+        roleLabel.Parent = container
+
+        -- Health & Armor text/bar
+        local statsLabel = Instance.new("TextLabel")
+        statsLabel.Name = "StatsLabel"
+        statsLabel.Size = UDim2.new(1, 0, 0, 14)
+        statsLabel.Position = UDim2.fromOffset(0, 30)
+        statsLabel.BackgroundTransparency = 1
+        statsLabel.Text = "HP: 100 | AP: 0"
+        statsLabel.TextColor3 = COLORS.Health
+        statsLabel.TextSize = 10
+        statsLabel.Font = Enum.Font.GothamBold
+        statsLabel.TextStrokeTransparency = 0.5
+        statsLabel.Parent = container
+
+        -- Distance
+        local distLabel = Instance.new("TextLabel")
+        distLabel.Name = "DistLabel"
+        distLabel.Size = UDim2.new(1, 0, 0, 14)
+        distLabel.Position = UDim2.fromOffset(0, 44)
+        distLabel.BackgroundTransparency = 1
+        distLabel.Text = "0 m"
+        distLabel.TextColor3 = COLORS.SecondaryText
+        distLabel.TextSize = 10
+        distLabel.Font = Enum.Font.Gotham
+        distLabel.TextStrokeTransparency = 0.5
+        distLabel.Parent = container
+
+        bb.Parent = character
+    end
+
+    if plr.Character then
+        ApplyEsp(plr.Character)
+    end
+    plr.CharacterAdded:Connect(ApplyEsp)
+end
+
+RunService.RenderStepped:Connect(function()
+    if not ESP_SETTINGS.Enabled then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr.Character then
+                local gui = plr.Character:FindFirstChild("CSS_ESP_GUI")
+                local hl = plr.Character:FindFirstChild("CSS_ESP_HL")
+                if gui then gui.Enabled = false end
+                if hl then hl.Enabled = false end
+            end
+        end
+        return
+    end
+
+    local myChar = Player.Character
+    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= Player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local char = plr.Character
+            local hrp = char.HumanoidRootPart
+            local gui = char:FindFirstChild("CSS_ESP_GUI")
+            local hl = char:FindFirstChild("CSS_ESP_HL")
+
+            if not gui or not hl then
+                CreateEspForPlayer(plr)
+                gui = char:FindFirstChild("CSS_ESP_GUI")
+                hl = char:FindFirstChild("CSS_ESP_HL")
+            end
+
+            if myHrp and gui and hl then
+                local distance = (myHrp.Position - hrp.Position).Magnitude
+                
+                if distance <= CONFIG.MaxEspDistance then
+                    gui.Enabled = true
+                    hl.Enabled = true
+
+                    local container = gui:FindFirstChild("Container")
+                    if container then
+                        local roleLbl = container:FindFirstChild("RoleLabel")
+                        local statsLbl = container:FindFirstChild("StatsLabel")
+                        local distLbl = container:FindFirstChild("DistLabel")
+
+                        -- Roles visibility
+                        if roleLbl then
+                            roleLbl.Visible = ESP_SETTINGS.Roles
+                            roleLbl.Text = "[" .. GetRussianRole(plr) .. "]"
+                        end
+
+                        -- Health / Armor logic
+                        if statsLbl then
+                            local humanoid = char:FindFirstChildOfClass("Humanoid")
+                            local hp = humanoid and math.floor(humanoid.Health) or 0
+                            
+                            -- Armor check (leaderstats or Armor object)
+                            local armor = 0
+                            local ls = plr:FindFirstChild("leaderstats")
+                            if ls and ls:FindFirstChild("Armor") then
+                                armor = math.floor(ls.Armor.Value)
+                            elseif char:FindFirstChild("Armor") then
+                                armor = math.floor(char.Armor.Value)
+                            end
+
+                            local textParts = {}
+                            if ESP_SETTINGS.Health then table.insert(textParts, "HP: " .. hp) end
+                            if ESP_SETTINGS.Armor then table.insert(textParts, "AP: " .. armor) end
+
+                            statsLbl.Text = table.concat(textParts, " | ")
+                            statsLbl.Visible = (ESP_SETTINGS.Health or ESP_SETTINGS.Armor)
+                        end
+
+                        -- Distance visibility
+                        if distLbl then
+                            distLbl.Visible = ESP_SETTINGS.Distance
+                            distLbl.Text = math.floor(distance) .. " m"
+                        end
+                    end
+                else
+                    gui.Enabled = false
+                    hl.Enabled = false
+                end
+            end
+        end
+    end
+end)
+
+
+-- 3. MOVEMENT PAGE (SPEED-HACK = 33)
 local MovementPage = Create("Frame", {
     Name = "MovementPage",
     Position = UDim2.fromOffset(0, 0),
@@ -586,20 +922,6 @@ Create("TextLabel", {
     ZIndex = 9
 }, MovementCard)
 
-Create("TextLabel", {
-    Name = "CardDescription",
-    Position = UDim2.fromOffset(22, 43),
-    Size = UDim2.new(1, -44, 0, 20),
-    BackgroundTransparency = 1,
-    Text = "Active gameplay modifications",
-    TextColor3 = COLORS.SecondaryText,
-    TextSize = 11,
-    Font = Enum.Font.GothamMedium,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 9
-}, MovementCard)
-
--- Speed Hack Logic
 local speedHackEnabled = false
 RunService.RenderStepped:Connect(function()
     if speedHackEnabled then
@@ -613,21 +935,19 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-CreateToggle(MovementCard, "speed-hack", 1, function(state)
+CreateToggle(MovementCard, "speed-hack", 72, function(state)
     speedHackEnabled = state
     if not state then
         local character = Player.Character
         if character then
             local humanoid = character:FindFirstChildOfClass("Humanoid")
             if humanoid then
-                humanoid.WalkSpeed = 16 -- Стандартная скорость в Roblox
+                humanoid.WalkSpeed = 16
             end
         end
     end
 end)
 
--- Dummy pages for WH, OTHER, SETTINGS to avoid errors on switch
-local WhPage = Create("Frame", { Name = "WhPage", Size = UDim2.fromScale(1,1), BackgroundTransparency = 1, Visible = false }, PagesFolder)
 local OtherPage = Create("Frame", { Name = "OtherPage", Size = UDim2.fromScale(1,1), BackgroundTransparency = 1, Visible = false }, PagesFolder)
 local SettingsPage = Create("Frame", { Name = "SettingsPage", Size = UDim2.fromScale(1,1), BackgroundTransparency = 1, Visible = false }, PagesFolder)
 
@@ -702,10 +1022,6 @@ local MenuItems = {
 
 local MenuButtons = {}
 
---//==================================================
---// TAB SYSTEM
---//==================================================
-
 local function SelectTab(index)
     local selected = MenuItems[index]
     if not selected then return end
@@ -713,7 +1029,6 @@ local function SelectTab(index)
     CurrentTitle.Text = selected.Name
     CurrentSubtitle.Text = selected.Subtitle
 
-    -- Переключаем видимость страниц
     AimPage.Visible = (selected.Page == AimPage)
     MovementPage.Visible = (selected.Page == MovementPage)
     WhPage.Visible = (selected.Page == WhPage)
@@ -736,10 +1051,6 @@ local function SelectTab(index)
         end
     end
 end
-
---//==================================================
---// CREATE MENU BUTTONS
---//==================================================
 
 for index, data in ipairs(MenuItems) do
     local Button = Create("TextButton", {
@@ -914,9 +1225,46 @@ local ReopenButton = Create("TextButton", {
 AddCorner(ReopenButton, 29)
 AddStroke(ReopenButton, COLORS.White, 0.75, 1)
 
+local ReopenDragging = false
+local ReopenDragStart = nil
+local ReopenStartPosition = nil
+local ReopenHasMoved = false
+
+ReopenButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        ReopenDragging = true
+        ReopenDragStart = input.Position
+        ReopenStartPosition = ReopenButton.Position
+        ReopenHasMoved = false
+        
+        ReopenButton.AnchorPoint = Vector2.new(0, 0)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if ReopenDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - ReopenDragStart
+        if delta.Magnitude > 5 then
+            ReopenHasMoved = true
+        end
+        ReopenButton.Position = UDim2.new(
+            ReopenStartPosition.X.Scale, ReopenStartPosition.X.Offset + delta.X,
+            ReopenStartPosition.Y.Scale, ReopenStartPosition.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and ReopenDragging then
+        ReopenDragging = false
+    end
+end)
+
 CloseButton.Activated:Connect(function()
     if Closed then return end
     Closed = true
+
+    BackgroundLayer.Visible = false
 
     Tween(MainFrame, {
         Size = UDim2.fromOffset(CONFIG.WindowSize.X * 0.92, CONFIG.WindowSize.Y * 0.92)
@@ -929,7 +1277,15 @@ CloseButton.Activated:Connect(function()
 end)
 
 ReopenButton.Activated:Connect(function()
+    if ReopenHasMoved then 
+        ReopenHasMoved = false
+        return 
+    end
+
     Closed = false
+    
+    BackgroundLayer.Visible = true
+    
     MainFrame.Visible = true
     DragButton.Visible = true
     MainFrame.Size = UDim2.fromOffset(CONFIG.WindowSize.X * 0.92, CONFIG.WindowSize.Y * 0.92)
@@ -942,4 +1298,4 @@ ReopenButton.Activated:Connect(function()
     task.defer(UpdateScale)
 end)
 
-print("[CSS JAVA] GUI loaded successfully with speed-hack.")
+print("[CSS JAVA] Script fully updated with WH Dropdown settings!")
