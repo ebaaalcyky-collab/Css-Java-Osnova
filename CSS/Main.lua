@@ -1,6 +1,21 @@
 --// CSS JAVA - Main.lua
---// GUI ONLY / DEBUG CONSOLE
---// Delta X diagnostic build
+--// GUI ONLY / NO GAMEPLAY FUNCTIONS
+
+local RAW_BASE = "https://raw.githubusercontent.com/ebaaalcyky-collab/Css-Java-Osnova/main/assets/"
+
+local ASSETS = {
+    background = RAW_BASE .. "background.png",
+    logo = RAW_BASE .. "logo.png",
+    aim = RAW_BASE .. "aim.png",
+    wh = RAW_BASE .. "wh.png",
+    movement = RAW_BASE .. "movement.png",
+    settings = RAW_BASE .. "settings.png",
+    player = RAW_BASE .. "player.png"
+}
+
+--//==================================================
+--// SERVICES
+--//==================================================
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -9,622 +24,1544 @@ local CoreGui = game:GetService("CoreGui")
 
 local Player = Players.LocalPlayer
 
---==================================================
--- CONFIG
---==================================================
+--//==================================================
+--// CONFIG
+--//==================================================
 
-local RAW_BASE =
-    "https://raw.githubusercontent.com/ebaaalcyky-collab/Css-Java-Osnova/main/assets/"
+local CONFIG = {
+    WindowSize = Vector2.new(1000, 620),
 
-local ASSETS = {
-    background = RAW_BASE .. "background.png",
-    logo       = RAW_BASE .. "logo.png",
-    aim        = RAW_BASE .. "aim.png",
-    wh         = RAW_BASE .. "wh.png",
-    movement   = RAW_BASE .. "movement.png",
-    settings   = RAW_BASE .. "settings.png",
-    player     = RAW_BASE .. "player.png"
+    MinScale = 0.42,
+    MaxScale = 1,
+
+    CornerRadius = 16,
+
+    -- Full background image
+    BackgroundTransparency = 0,
+
+    -- Darkness over the game/background image.
+    -- Higher = more transparent.
+    BackgroundOverlayTransparency = 0.45,
+
+    -- Darkness of the actual CSS JAVA window.
+    WindowTransparency = 0.04,
+
+    SidebarWidth = 225,
+
+    AnimationTime = 0.18
 }
 
---==================================================
--- REMOVE OLD GUI
---==================================================
+--//==================================================
+--// COLORS
+--//==================================================
+
+local COLORS = {
+    Background = Color3.fromRGB(9, 10, 14),
+
+    Panel = Color3.fromRGB(14, 16, 22),
+
+    Sidebar = Color3.fromRGB(11, 13, 18),
+
+    Card = Color3.fromRGB(20, 23, 31),
+    CardHover = Color3.fromRGB(27, 30, 40),
+
+    Accent = Color3.fromRGB(130, 85, 255),
+    AccentDark = Color3.fromRGB(91, 58, 190),
+
+    Text = Color3.fromRGB(245, 245, 248),
+    SecondaryText = Color3.fromRGB(145, 149, 160),
+    MutedText = Color3.fromRGB(95, 99, 110),
+
+    Border = Color3.fromRGB(42, 45, 56),
+
+    ToggleOff = Color3.fromRGB(42, 45, 54),
+    ToggleOn = Color3.fromRGB(130, 85, 255),
+
+    White = Color3.fromRGB(255, 255, 255)
+}
+
+--//==================================================
+--// HELPERS
+--//==================================================
+
+local function Create(className, properties, parent)
+    local object = Instance.new(className)
+
+    for property, value in pairs(properties or {}) do
+        object[property] = value
+    end
+
+    object.Parent = parent
+
+    return object
+end
+
+local function AddCorner(parent, radius)
+    return Create("UICorner", {
+        CornerRadius = UDim.new(0, radius)
+    }, parent)
+end
+
+local function AddStroke(parent, color, transparency, thickness)
+    return Create("UIStroke", {
+        Color = color,
+        Transparency = transparency or 0,
+        Thickness = thickness or 1
+    }, parent)
+end
+
+local function AddPadding(parent, left, right, top, bottom)
+    return Create("UIPadding", {
+        PaddingLeft = UDim.new(0, left or 0),
+        PaddingRight = UDim.new(0, right or 0),
+        PaddingTop = UDim.new(0, top or 0),
+        PaddingBottom = UDim.new(0, bottom or 0)
+    }, parent)
+end
+
+local function Tween(object, properties, duration)
+    if not object then
+        return
+    end
+
+    TweenService:Create(
+        object,
+        TweenInfo.new(
+            duration or CONFIG.AnimationTime,
+            Enum.EasingStyle.Quint,
+            Enum.EasingDirection.Out
+        ),
+        properties
+    ):Play()
+end
+
+--//==================================================
+--// GUI ROOT
+--//==================================================
+
+local ExistingGui = nil
 
 pcall(function()
-    local old = CoreGui:FindFirstChild("CSS_JAVA_GUI")
-    if old then
-        old:Destroy()
-    end
+    ExistingGui = CoreGui:FindFirstChild("CSS_JAVA_GUI")
 end)
 
---==================================================
--- HELPERS
---==================================================
-
-local function New(class, props)
-    local obj = Instance.new(class)
-
-    for key, value in pairs(props or {}) do
-        pcall(function()
-            obj[key] = value
-        end)
-    end
-
-    return obj
+if ExistingGui then
+    ExistingGui:Destroy()
 end
 
-local function Corner(parent, radius)
-    return New("UICorner", {
-        Parent = parent,
-        CornerRadius = UDim.new(0, radius)
-    })
-end
-
-local function Stroke(parent, color, thickness, transparency)
-    return New("UIStroke", {
-        Parent = parent,
-        Color = color,
-        Thickness = thickness or 1,
-        Transparency = transparency or 0
-    })
-end
-
---==================================================
--- GUI
---==================================================
-
-local GUI = New("ScreenGui", {
+local ScreenGui = Create("ScreenGui", {
     Name = "CSS_JAVA_GUI",
-    Parent = CoreGui,
+
     ResetOnSpawn = false,
+
     IgnoreGuiInset = true,
-    ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-})
 
-local Scale = New("UIScale", {
-    Parent = GUI,
-    Scale = 0.82
-})
+    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 
-local Main = New("Frame", {
-    Name = "Main",
-    Parent = GUI,
-    Size = UDim2.new(0, 1000, 0, 620),
-    Position = UDim2.new(0.5, -500, 0.5, -310),
-    BackgroundColor3 = Color3.fromRGB(12, 12, 17),
-    BorderSizePixel = 0
-})
+    DisplayOrder = 999
+}, CoreGui)
 
-Corner(Main, 14)
-Stroke(Main, Color3.fromRGB(45, 45, 55), 1)
+--//==================================================
+--// FULL SCREEN BACKGROUND
+--//==================================================
 
---==================================================
--- TOP BAR
---==================================================
+-- The background is intentionally OUTSIDE MainFrame.
+-- This allows the game/background image to remain visible
+-- around the CSS JAVA window.
 
-local TopBar = New("Frame", {
-    Parent = Main,
-    Size = UDim2.new(1, 0, 0, 55),
-    BackgroundColor3 = Color3.fromRGB(17, 17, 23),
-    BorderSizePixel = 0
-})
+local BackgroundLayer = Create("Frame", {
+    Name = "BackgroundLayer",
 
-Corner(TopBar, 14)
+    Position = UDim2.fromScale(0, 0),
 
-local Title = New("TextLabel", {
-    Parent = TopBar,
+    Size = UDim2.fromScale(1, 1),
+
     BackgroundTransparency = 1,
-    Position = UDim2.new(0, 22, 0, 5),
-    Size = UDim2.new(0, 400, 0, 45),
-    Font = Enum.Font.GothamBold,
-    Text = "CSS JAVA",
-    TextSize = 22,
-    TextColor3 = Color3.fromRGB(255, 255, 255),
-    TextXAlignment = Enum.TextXAlignment.Left
-})
 
-local Subtitle = New("TextLabel", {
-    Parent = TopBar,
-    BackgroundTransparency = 1,
-    Position = UDim2.new(0, 140, 0, 7),
-    Size = UDim2.new(0, 250, 0, 40),
-    Font = Enum.Font.Gotham,
-    Text = "DELTA DEBUG BUILD",
-    TextSize = 12,
-    TextColor3 = Color3.fromRGB(130, 130, 145),
-    TextXAlignment = Enum.TextXAlignment.Left
-})
-
---==================================================
--- CLOSE BUTTON
---==================================================
-
-local Close = New("TextButton", {
-    Parent = TopBar,
-    Size = UDim2.new(0, 38, 0, 38),
-    Position = UDim2.new(1, -47, 0, 8),
-    BackgroundColor3 = Color3.fromRGB(30, 30, 38),
     BorderSizePixel = 0,
-    Text = "×",
-    Font = Enum.Font.GothamBold,
-    TextSize = 24,
-    TextColor3 = Color3.fromRGB(230, 230, 230),
-    AutoButtonColor = false
+
+    ZIndex = 0
+}, ScreenGui)
+
+local Background = Create("ImageLabel", {
+    Name = "Background",
+
+    Position = UDim2.fromScale(0, 0),
+
+    Size = UDim2.fromScale(1, 1),
+
+    BackgroundTransparency = 1,
+
+    BorderSizePixel = 0,
+
+    Image = ASSETS.background,
+
+    -- Do NOT tint the image.
+    ImageColor3 = Color3.fromRGB(255, 255, 255),
+
+    ImageTransparency = CONFIG.BackgroundTransparency,
+
+    ScaleType = Enum.ScaleType.Crop,
+
+    ZIndex = 0
+}, BackgroundLayer)
+
+-- Dark overlay for the background image.
+local BackgroundOverlay = Create("Frame", {
+    Name = "BackgroundOverlay",
+
+    Position = UDim2.fromScale(0, 0),
+
+    Size = UDim2.fromScale(1, 1),
+
+    BackgroundColor3 = Color3.fromRGB(5, 6, 9),
+
+    BackgroundTransparency = CONFIG.BackgroundOverlayTransparency,
+
+    BorderSizePixel = 0,
+
+    ZIndex = 1
+}, BackgroundLayer)
+
+--//==================================================
+--// SCALE SYSTEM
+--//==================================================
+
+local UIScale = Create("UIScale", {
+    Scale = 1
 })
 
-Corner(Close, 9)
+--//==================================================
+--// MAIN WINDOW
+--//==================================================
 
-Close.MouseButton1Click:Connect(function()
-    GUI.Enabled = false
+local MainFrame = Create("Frame", {
+    Name = "MainWindow",
+
+    AnchorPoint = Vector2.new(0.5, 0.5),
+
+    Position = UDim2.fromScale(0.5, 0.5),
+
+    Size = UDim2.fromOffset(
+        CONFIG.WindowSize.X,
+        CONFIG.WindowSize.Y
+    ),
+
+    BackgroundColor3 = COLORS.Panel,
+
+    -- The actual window is dark.
+    BackgroundTransparency = 1,
+
+    BorderSizePixel = 0,
+
+    ClipsDescendants = true,
+
+    ZIndex = 3
+}, ScreenGui)
+
+UIScale.Parent = MainFrame
+
+AddCorner(MainFrame, CONFIG.CornerRadius)
+AddStroke(MainFrame, COLORS.Border, 0.2, 1)
+
+--//==================================================
+--// WINDOW DARK BACKDROP
+--//==================================================
+
+-- This is what makes the window dark while the
+-- game remains visible OUTSIDE the window.
+
+local WindowBackdrop = Create("Frame", {
+    Name = "WindowBackdrop",
+
+    Position = UDim2.fromScale(0, 0),
+
+    Size = UDim2.fromScale(1, 1),
+
+    BackgroundColor3 = COLORS.Panel,
+
+    BackgroundTransparency = CONFIG.WindowTransparency,
+
+    BorderSizePixel = 0,
+
+    ZIndex = 3
+}, MainFrame)
+
+AddCorner(WindowBackdrop, CONFIG.CornerRadius)
+
+--//==================================================
+--// SIDEBAR
+--//==================================================
+
+local Sidebar = Create("Frame", {
+    Name = "Sidebar",
+
+    Position = UDim2.fromOffset(0, 0),
+
+    Size = UDim2.new(
+        0,
+        CONFIG.SidebarWidth,
+        1,
+        0
+    ),
+
+    BackgroundColor3 = COLORS.Sidebar,
+
+    BackgroundTransparency = 0.06,
+
+    BorderSizePixel = 0,
+
+    ZIndex = 5
+}, MainFrame)
+
+AddStroke(Sidebar, COLORS.Border, 0.35, 1)
+
+--//==================================================
+--// BRAND
+--//==================================================
+
+local Brand = Create("Frame", {
+    Name = "Brand",
+
+    Position = UDim2.fromOffset(20, 22),
+
+    Size = UDim2.new(1, -40, 0, 58),
+
+    BackgroundTransparency = 1,
+
+    ZIndex = 6
+}, Sidebar)
+
+local Logo = Create("ImageLabel", {
+    Name = "Logo",
+
+    Position = UDim2.fromOffset(0, 3),
+
+    Size = UDim2.fromOffset(48, 48),
+
+    BackgroundTransparency = 1,
+
+    Image = ASSETS.logo,
+
+    ScaleType = Enum.ScaleType.Fit,
+
+    ZIndex = 7
+}, Brand)
+
+AddCorner(Logo, 12)
+
+local BrandTitle = Create("TextLabel", {
+    Name = "Title",
+
+    Position = UDim2.fromOffset(60, 3),
+
+    Size = UDim2.new(1, -60, 0, 25),
+
+    BackgroundTransparency = 1,
+
+    Text = "CSS JAVA",
+
+    TextColor3 = COLORS.Text,
+
+    TextSize = 19,
+
+    Font = Enum.Font.GothamBold,
+
+    TextXAlignment = Enum.TextXAlignment.Left,
+
+    ZIndex = 7
+}, Brand)
+
+local BrandSubtitle = Create("TextLabel", {
+    Name = "Subtitle",
+
+    Position = UDim2.fromOffset(60, 28),
+
+    Size = UDim2.new(1, -60, 0, 20),
+
+    BackgroundTransparency = 1,
+
+    Text = "CONTROL PANEL",
+
+    TextColor3 = COLORS.SecondaryText,
+
+    TextSize = 9,
+
+    Font = Enum.Font.GothamMedium,
+
+    TextXAlignment = Enum.TextXAlignment.Left,
+
+    ZIndex = 7
+}, Brand)
+
+--//==================================================
+--// SIDEBAR MENU
+--//==================================================
+
+local MenuContainer = Create("Frame", {
+    Name = "Menu",
+
+    Position = UDim2.fromOffset(12, 105),
+
+    Size = UDim2.new(1, -24, 0, 280),
+
+    BackgroundTransparency = 1,
+
+    ZIndex = 7
+}, Sidebar)
+
+local MenuLayout = Create("UIListLayout", {
+    FillDirection = Enum.FillDirection.Vertical,
+
+    HorizontalAlignment = Enum.HorizontalAlignment.Center,
+
+    SortOrder = Enum.SortOrder.LayoutOrder,
+
+    Padding = UDim.new(0, 7)
+}, MenuContainer)
+
+--//==================================================
+--// CONTENT
+--//==================================================
+
+local Content = Create("Frame", {
+    Name = "Content",
+
+    Position = UDim2.fromOffset(
+        CONFIG.SidebarWidth,
+        0
+    ),
+
+    Size = UDim2.new(
+        1,
+        -CONFIG.SidebarWidth,
+        1,
+        0
+    ),
+
+    BackgroundTransparency = 1,
+
+    ZIndex = 4
+}, MainFrame)
+
+--//==================================================
+--// TOP BAR
+--//==================================================
+
+local TopBar = Create("Frame", {
+    Name = "TopBar",
+
+    Position = UDim2.fromOffset(30, 25),
+
+    Size = UDim2.new(1, -60, 0, 50),
+
+    BackgroundTransparency = 1,
+
+    ZIndex = 8
+}, Content)
+
+local CurrentTitle = Create("TextLabel", {
+    Name = "CurrentTitle",
+
+    Position = UDim2.fromOffset(0, 0),
+
+    Size = UDim2.new(1, -130, 0, 29),
+
+    BackgroundTransparency = 1,
+
+    Text = "AIM",
+
+    TextColor3 = COLORS.Text,
+
+    TextSize = 24,
+
+    Font = Enum.Font.GothamBold,
+
+    TextXAlignment = Enum.TextXAlignment.Left,
+
+    ZIndex = 9
+}, TopBar)
+
+local CurrentSubtitle = Create("TextLabel", {
+    Name = "CurrentSubtitle",
+
+    Position = UDim2.fromOffset(0, 29),
+
+    Size = UDim2.new(1, -130, 0, 20),
+
+    BackgroundTransparency = 1,
+
+    Text = "Basic configuration panel",
+
+    TextColor3 = COLORS.SecondaryText,
+
+    TextSize = 12,
+
+    Font = Enum.Font.GothamMedium,
+
+    TextXAlignment = Enum.TextXAlignment.Left,
+
+    ZIndex = 9
+}, TopBar)
+
+--//==================================================
+--// CLOSE BUTTON
+--//==================================================
+
+local CloseButton = Create("TextButton", {
+    Name = "Close",
+
+    AnchorPoint = Vector2.new(1, 0),
+
+    Position = UDim2.new(1, 0, 0, 0),
+
+    Size = UDim2.fromOffset(38, 38),
+
+    BackgroundColor3 = COLORS.Card,
+
+    BackgroundTransparency = 0.1,
+
+    BorderSizePixel = 0,
+
+    Text = "×",
+
+    TextColor3 = COLORS.SecondaryText,
+
+    TextSize = 22,
+
+    Font = Enum.Font.GothamMedium,
+
+    AutoButtonColor = false,
+
+    ZIndex = 10
+}, TopBar)
+
+AddCorner(CloseButton, 10)
+AddStroke(CloseButton, COLORS.Border, 0.25, 1)
+
+CloseButton.MouseEnter:Connect(function()
+    Tween(CloseButton, {
+        BackgroundColor3 = Color3.fromRGB(75, 35, 45),
+        TextColor3 = COLORS.White
+    })
 end)
 
---==================================================
--- SIDEBAR
---==================================================
+CloseButton.MouseLeave:Connect(function()
+    Tween(CloseButton, {
+        BackgroundColor3 = COLORS.Card,
+        TextColor3 = COLORS.SecondaryText
+    })
+end)
 
-local Sidebar = New("Frame", {
-    Parent = Main,
-    Position = UDim2.new(0, 0, 0, 55),
-    Size = UDim2.new(0, 190, 1, -55),
-    BackgroundColor3 = Color3.fromRGB(15, 15, 21),
-    BorderSizePixel = 0
-})
+--//==================================================
+--// DRAG BUTTON
+--//==================================================
 
-local Logo = New("ImageLabel", {
-    Parent = Sidebar,
+local DragButton = Create("TextButton", {
+    Name = "DragButton",
+
+    AnchorPoint = Vector2.new(1, 0),
+
+    Position = UDim2.new(1, -47, 0, 0),
+
+    Size = UDim2.fromOffset(38, 38),
+
+    BackgroundColor3 = COLORS.Card,
+
+    BackgroundTransparency = 0.1,
+
+    BorderSizePixel = 0,
+
+    Text = "⠿",
+
+    TextColor3 = COLORS.SecondaryText,
+
+    TextSize = 20,
+
+    Font = Enum.Font.GothamBold,
+
+    AutoButtonColor = false,
+
+    ZIndex = 10
+}, TopBar)
+
+AddCorner(DragButton, 10)
+AddStroke(DragButton, COLORS.Border, 0.25, 1)
+
+--//==================================================
+--// CONTENT CARD
+--//==================================================
+
+local SettingsCard = Create("Frame", {
+    Name = "DemoSettings",
+
+    Position = UDim2.fromOffset(30, 105),
+
+    Size = UDim2.new(1, -60, 0, 250),
+
+    BackgroundColor3 = COLORS.Card,
+
+    BackgroundTransparency = 0.08,
+
+    BorderSizePixel = 0,
+
+    ZIndex = 8
+}, Content)
+
+AddCorner(SettingsCard, 14)
+AddStroke(SettingsCard, COLORS.Border, 0.25, 1)
+
+local CardTitle = Create("TextLabel", {
+    Name = "CardTitle",
+
+    Position = UDim2.fromOffset(22, 18),
+
+    Size = UDim2.new(1, -44, 0, 25),
+
     BackgroundTransparency = 1,
-    Position = UDim2.new(0.5, -45, 0, 25),
-    Size = UDim2.new(0, 90, 0, 90),
-    Image = "",
-    ScaleType = Enum.ScaleType.Fit
-})
 
---==================================================
--- TABS
---==================================================
+    Text = "DEMONSTRATION",
 
-local Tabs = {
+    TextColor3 = COLORS.Text,
+
+    TextSize = 13,
+
+    Font = Enum.Font.GothamBold,
+
+    TextXAlignment = Enum.TextXAlignment.Left,
+
+    ZIndex = 9
+}, SettingsCard)
+
+local CardDescription = Create("TextLabel", {
+    Name = "CardDescription",
+
+    Position = UDim2.fromOffset(22, 43),
+
+    Size = UDim2.new(1, -44, 0, 20),
+
+    BackgroundTransparency = 1,
+
+    Text = "Visual controls only — no gameplay functionality",
+
+    TextColor3 = COLORS.SecondaryText,
+
+    TextSize = 11,
+
+    Font = Enum.Font.GothamMedium,
+
+    TextXAlignment = Enum.TextXAlignment.Left,
+
+    ZIndex = 9
+}, SettingsCard)
+
+--//==================================================
+--// TOGGLE CREATOR
+--//==================================================
+
+local function CreateToggle(parent, text, order)
+
+    local Row = Create("Frame", {
+        Name = text .. "Row",
+
+        Position = UDim2.fromOffset(
+            20,
+            72 + ((order - 1) * 52)
+        ),
+
+        Size = UDim2.new(1, -40, 0, 44),
+
+        BackgroundTransparency = 1,
+
+        ZIndex = 10
+    }, parent)
+
+    local Label = Create("TextLabel", {
+        Name = "Label",
+
+        Position = UDim2.fromOffset(0, 0),
+
+        Size = UDim2.new(1, -90, 1, 0),
+
+        BackgroundTransparency = 1,
+
+        Text = text,
+
+        TextColor3 = COLORS.Text,
+
+        TextSize = 13,
+
+        Font = Enum.Font.GothamMedium,
+
+        TextXAlignment = Enum.TextXAlignment.Left,
+
+        TextYAlignment = Enum.TextYAlignment.Center,
+
+        ZIndex = 11
+    }, Row)
+
+    local Toggle = Create("TextButton", {
+        Name = "Toggle",
+
+        AnchorPoint = Vector2.new(1, 0.5),
+
+        Position = UDim2.new(1, 0, 0.5, 0),
+
+        Size = UDim2.fromOffset(56, 30),
+
+        BackgroundColor3 = COLORS.ToggleOff,
+
+        BorderSizePixel = 0,
+
+        Text = "",
+
+        AutoButtonColor = false,
+
+        ZIndex = 11
+    }, Row)
+
+    AddCorner(Toggle, 15)
+
+    local Circle = Create("Frame", {
+        Name = "Circle",
+
+        AnchorPoint = Vector2.new(0, 0.5),
+
+        Position = UDim2.new(0, 4, 0.5, 0),
+
+        Size = UDim2.fromOffset(22, 22),
+
+        BackgroundColor3 = COLORS.SecondaryText,
+
+        BorderSizePixel = 0,
+
+        ZIndex = 12
+    }, Toggle)
+
+    AddCorner(Circle, 11)
+
+    local State = false
+
+    local function SetState(value)
+
+        State = value
+
+        if State then
+
+            Tween(Toggle, {
+                BackgroundColor3 = COLORS.ToggleOn
+            })
+
+            Tween(Circle, {
+                Position = UDim2.new(1, -26, 0.5, 0),
+                BackgroundColor3 = COLORS.White
+            })
+
+        else
+
+            Tween(Toggle, {
+                BackgroundColor3 = COLORS.ToggleOff
+            })
+
+            Tween(Circle, {
+                Position = UDim2.new(0, 4, 0.5, 0),
+                BackgroundColor3 = COLORS.SecondaryText
+            })
+
+        end
+    end
+
+    Toggle.Activated:Connect(function()
+        SetState(not State)
+    end)
+
+    return Row
+end
+
+CreateToggle(SettingsCard, "Enabled", 1)
+CreateToggle(SettingsCard, "Preview", 2)
+CreateToggle(SettingsCard, "Advanced", 3)
+
+--//==================================================
+--// FOOTER INFO
+--//==================================================
+
+local InfoCard = Create("Frame", {
+    Name = "Info",
+
+    Position = UDim2.fromOffset(30, 375),
+
+    Size = UDim2.new(1, -60, 0, 105),
+
+    BackgroundColor3 = COLORS.Card,
+
+    BackgroundTransparency = 0.15,
+
+    BorderSizePixel = 0,
+
+    ZIndex = 8
+}, Content)
+
+AddCorner(InfoCard, 14)
+AddStroke(InfoCard, COLORS.Border, 0.3, 1)
+
+local InfoTitle = Create("TextLabel", {
+    Name = "InfoTitle",
+
+    Position = UDim2.fromOffset(20, 17),
+
+    Size = UDim2.new(1, -40, 0, 23),
+
+    BackgroundTransparency = 1,
+
+    Text = "INTERFACE READY",
+
+    TextColor3 = COLORS.Accent,
+
+    TextSize = 12,
+
+    Font = Enum.Font.GothamBold,
+
+    TextXAlignment = Enum.TextXAlignment.Left,
+
+    ZIndex = 9
+}, InfoCard)
+
+local InfoText = Create("TextLabel", {
+    Name = "InfoText",
+
+    Position = UDim2.fromOffset(20, 42),
+
+    Size = UDim2.new(1, -40, 0, 42),
+
+    BackgroundTransparency = 1,
+
+    Text = "This panel is a clean GUI foundation.\nAll controls are visual placeholders.",
+
+    TextColor3 = COLORS.SecondaryText,
+
+    TextSize = 11,
+
+    Font = Enum.Font.GothamMedium,
+
+    TextXAlignment = Enum.TextXAlignment.Left,
+
+    TextYAlignment = Enum.TextYAlignment.Top,
+
+    ZIndex = 9
+}, InfoCard)
+
+--//==================================================
+--// PLAYER PANEL
+--//==================================================
+
+local PlayerPanel = Create("Frame", {
+    Name = "PlayerPanel",
+
+    AnchorPoint = Vector2.new(0, 1),
+
+    Position = UDim2.new(0, 12, 1, -15),
+
+    Size = UDim2.new(1, -24, 0, 55),
+
+    BackgroundColor3 = COLORS.Card,
+
+    BackgroundTransparency = 0.12,
+
+    BorderSizePixel = 0,
+
+    ZIndex = 8
+}, Sidebar)
+
+AddCorner(PlayerPanel, 12)
+AddStroke(PlayerPanel, COLORS.Border, 0.3, 1)
+
+local PlayerIcon = Create("ImageLabel", {
+    Name = "PlayerIcon",
+
+    Position = UDim2.fromOffset(8, 7),
+
+    Size = UDim2.fromOffset(40, 40),
+
+    BackgroundTransparency = 1,
+
+    Image = ASSETS.player,
+
+    ScaleType = Enum.ScaleType.Fit,
+
+    ZIndex = 9
+}, PlayerPanel)
+
+AddCorner(PlayerIcon, 20)
+
+local PlayerName = Create("TextLabel", {
+    Name = "PlayerName",
+
+    Position = UDim2.fromOffset(57, 7),
+
+    Size = UDim2.new(1, -65, 0, 22),
+
+    BackgroundTransparency = 1,
+
+    Text = Player and Player.Name or "Player",
+
+    TextColor3 = COLORS.Text,
+
+    TextSize = 12,
+
+    Font = Enum.Font.GothamBold,
+
+    TextXAlignment = Enum.TextXAlignment.Left,
+
+    TextTruncate = Enum.TextTruncate.AtEnd,
+
+    ZIndex = 9
+}, PlayerPanel)
+
+local PlayerRole = Create("TextLabel", {
+    Name = "PlayerRole",
+
+    Position = UDim2.fromOffset(57, 28),
+
+    Size = UDim2.new(1, -65, 0, 17),
+
+    BackgroundTransparency = 1,
+
+    Text = "CSS JAVA",
+
+    TextColor3 = COLORS.SecondaryText,
+
+    TextSize = 9,
+
+    Font = Enum.Font.GothamMedium,
+
+    TextXAlignment = Enum.TextXAlignment.Left,
+
+    ZIndex = 9
+}, PlayerPanel)
+
+--//==================================================
+--// MENU DATA
+--//==================================================
+
+local MenuItems = {
+
     {
-        name = "AIM",
-        image = ASSETS.aim
+        Name = "AIM",
+
+        Icon = ASSETS.aim,
+
+        Subtitle = "Basic configuration panel"
     },
+
     {
-        name = "WALLHACK",
-        image = ASSETS.wh
+        Name = "WH",
+
+        Icon = ASSETS.wh,
+
+        Subtitle = "Visual configuration panel"
     },
+
     {
-        name = "MOVEMENT",
-        image = ASSETS.movement
+        Name = "MOVEMENT",
+
+        Icon = ASSETS.movement,
+
+        Subtitle = "Movement configuration panel"
     },
+
     {
-        name = "SETTINGS",
-        image = ASSETS.settings
+        Name = "OTHER",
+
+        Icon = ASSETS.settings,
+
+        Subtitle = "Other configuration panel"
     },
+
     {
-        name = "PLAYER",
-        image = ASSETS.player
+        Name = "SETTINGS",
+
+        Icon = ASSETS.settings,
+
+        Subtitle = "Interface settings"
     }
 }
 
-local TabButtons = {}
+local MenuButtons = {}
 
-for i, tab in ipairs(Tabs) do
+--//==================================================
+--// TAB SYSTEM
+--//==================================================
 
-    local Button = New("TextButton", {
-        Parent = Sidebar,
-        Position = UDim2.new(0, 15, 0, 135 + ((i - 1) * 55)),
-        Size = UDim2.new(1, -30, 0, 45),
-        BackgroundColor3 = Color3.fromRGB(22, 22, 29),
-        BorderSizePixel = 0,
-        Text = "",
-        AutoButtonColor = false
-    })
+local function SelectTab(index)
 
-    Corner(Button, 9)
+    local selected = MenuItems[index]
 
-    local Icon = New("ImageLabel", {
-        Parent = Button,
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0, 10, 0.5, -12),
-        Size = UDim2.new(0, 24, 0, 24),
-        Image = "",
-        ScaleType = Enum.ScaleType.Fit
-    })
+    if not selected then
+        return
+    end
 
-    local Text = New("TextLabel", {
-        Parent = Button,
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0, 45, 0, 0),
-        Size = UDim2.new(1, -50, 1, 0),
-        Font = Enum.Font.GothamMedium,
-        Text = tab.name,
-        TextSize = 12,
-        TextColor3 = Color3.fromRGB(190, 190, 200),
-        TextXAlignment = Enum.TextXAlignment.Left
-    })
+    CurrentTitle.Text = selected.Name
 
-    TabButtons[i] = Button
+    CurrentSubtitle.Text = selected.Subtitle
+
+    for i, buttonData in ipairs(MenuButtons) do
+
+        local Button = buttonData.Button
+        local Icon = buttonData.Icon
+        local Indicator = buttonData.Indicator
+
+        if i == index then
+
+            Tween(Button, {
+                BackgroundColor3 = COLORS.Accent,
+                BackgroundTransparency = 0.08
+            })
+
+            Tween(Icon, {
+                ImageColor3 = COLORS.White,
+                ImageTransparency = 0
+            })
+
+            Tween(Indicator, {
+                BackgroundTransparency = 0
+            })
+
+        else
+
+            Tween(Button, {
+                BackgroundColor3 = COLORS.Card,
+                BackgroundTransparency = 1
+            })
+
+            Tween(Icon, {
+                ImageColor3 = COLORS.SecondaryText,
+                ImageTransparency = 0
+            })
+
+            Tween(Indicator, {
+                BackgroundTransparency = 1
+            })
+
+        end
+    end
 end
 
---==================================================
--- CONTENT
---==================================================
+--//==================================================
+--// CREATE MENU BUTTONS
+--//==================================================
 
-local Content = New("Frame", {
-    Parent = Main,
-    Position = UDim2.new(0, 190, 0, 55),
-    Size = UDim2.new(1, -190, 1, -55),
-    BackgroundColor3 = Color3.fromRGB(12, 12, 17),
-    BorderSizePixel = 0
-})
+for index, data in ipairs(MenuItems) do
 
-local PageTitle = New("TextLabel", {
-    Parent = Content,
-    BackgroundTransparency = 1,
-    Position = UDim2.new(0, 25, 0, 20),
-    Size = UDim2.new(1, -50, 0, 35),
-    Font = Enum.Font.GothamBold,
-    Text = "Dashboard",
-    TextSize = 24,
-    TextColor3 = Color3.fromRGB(255, 255, 255),
-    TextXAlignment = Enum.TextXAlignment.Left
-})
+    local Button = Create("TextButton", {
+        Name = data.Name,
 
---==================================================
--- INFO CARD
---==================================================
+        Size = UDim2.new(1, 0, 0, 48),
 
-local InfoCard = New("Frame", {
-    Parent = Content,
-    Position = UDim2.new(0, 25, 0, 70),
-    Size = UDim2.new(1, -50, 0, 135),
-    BackgroundColor3 = Color3.fromRGB(18, 18, 25),
-    BorderSizePixel = 0
-})
+        BackgroundColor3 = COLORS.Card,
 
-Corner(InfoCard, 12)
-Stroke(InfoCard, Color3.fromRGB(42, 42, 52), 1)
+        BackgroundTransparency = 1,
 
-local InfoTitle = New("TextLabel", {
-    Parent = InfoCard,
-    BackgroundTransparency = 1,
-    Position = UDim2.new(0, 18, 0, 15),
-    Size = UDim2.new(1, -36, 0, 28),
-    Font = Enum.Font.GothamBold,
-    Text = "CSS JAVA",
-    TextSize = 17,
-    TextColor3 = Color3.fromRGB(255, 255, 255),
-    TextXAlignment = Enum.TextXAlignment.Left
-})
+        BorderSizePixel = 0,
 
-local InfoText = New("TextLabel", {
-    Parent = InfoCard,
-    BackgroundTransparency = 1,
-    Position = UDim2.new(0, 18, 0, 47),
-    Size = UDim2.new(1, -36, 0, 65),
-    Font = Enum.Font.Gotham,
-    Text = "GUI ONLY\nPNG / GitHub / Delta diagnostics enabled",
-    TextSize = 13,
-    TextColor3 = Color3.fromRGB(145, 145, 160),
-    TextXAlignment = Enum.TextXAlignment.Left,
-    TextYAlignment = Enum.TextYAlignment.Top
-})
+        Text = "",
 
---==================================================
--- DEBUG CONSOLE
---==================================================
+        AutoButtonColor = false,
 
-local Console = New("Frame", {
-    Parent = Content,
-    Position = UDim2.new(0, 25, 0, 220),
-    Size = UDim2.new(1, -50, 0, 315),
-    BackgroundColor3 = Color3.fromRGB(7, 7, 10),
-    BorderSizePixel = 0
-})
+        LayoutOrder = index,
 
-Corner(Console, 12)
-Stroke(Console, Color3.fromRGB(45, 45, 55), 1)
+        ZIndex = 8
+    }, MenuContainer)
 
-local ConsoleHeader = New("Frame", {
-    Parent = Console,
-    Size = UDim2.new(1, 0, 0, 42),
-    BackgroundColor3 = Color3.fromRGB(16, 16, 22),
-    BorderSizePixel = 0
-})
+    AddCorner(Button, 11)
 
-Corner(ConsoleHeader, 12)
+    local Indicator = Create("Frame", {
+        Name = "Indicator",
 
-local ConsoleTitle = New("TextLabel", {
-    Parent = ConsoleHeader,
-    BackgroundTransparency = 1,
-    Position = UDim2.new(0, 15, 0, 0),
-    Size = UDim2.new(1, -30, 1, 0),
-    Font = Enum.Font.GothamBold,
-    Text = "DELTA DEBUG CONSOLE",
-    TextSize = 13,
-    TextColor3 = Color3.fromRGB(255, 255, 255),
-    TextXAlignment = Enum.TextXAlignment.Left
-})
+        Position = UDim2.fromOffset(0, 10),
 
-local ConsoleOutput = New("TextLabel", {
-    Parent = Console,
-    BackgroundTransparency = 1,
-    Position = UDim2.new(0, 15, 0, 52),
-    Size = UDim2.new(1, -30, 1, -62),
-    Font = Enum.Font.Code,
-    Text = "Starting diagnostics...",
-    TextSize = 13,
-    TextColor3 = Color3.fromRGB(190, 190, 200),
-    TextXAlignment = Enum.TextXAlignment.Left,
-    TextYAlignment = Enum.TextYAlignment.Top
-})
+        Size = UDim2.fromOffset(3, 28),
 
---==================================================
--- DRAG
---==================================================
+        BackgroundColor3 = COLORS.White,
 
-local dragging = false
-local dragStart
-local startPos
+        BackgroundTransparency = 1,
 
-TopBar.InputBegan:Connect(function(input)
+        BorderSizePixel = 0,
+
+        ZIndex = 10
+    }, Button)
+
+    AddCorner(Indicator, 2)
+
+    local Icon = Create("ImageLabel", {
+        Name = "Icon",
+
+        Position = UDim2.fromOffset(14, 10),
+
+        Size = UDim2.fromOffset(28, 28),
+
+        BackgroundTransparency = 1,
+
+        Image = data.Icon,
+
+        ImageColor3 = COLORS.SecondaryText,
+
+        ScaleType = Enum.ScaleType.Fit,
+
+        ZIndex = 9
+    }, Button)
+
+    local Text = Create("TextLabel", {
+        Name = "Text",
+
+        Position = UDim2.fromOffset(54, 0),
+
+        Size = UDim2.new(1, -62, 1, 0),
+
+        BackgroundTransparency = 1,
+
+        Text = data.Name,
+
+        TextColor3 = COLORS.Text,
+
+        TextSize = 11,
+
+        Font = Enum.Font.GothamBold,
+
+        TextXAlignment = Enum.TextXAlignment.Left,
+
+        ZIndex = 9
+    }, Button)
+
+    Button.MouseEnter:Connect(function()
+
+        if index ~= 1 then
+
+            Tween(Button, {
+                BackgroundTransparency = 0.7
+            })
+
+        end
+    end)
+
+    Button.MouseLeave:Connect(function()
+
+        if index ~= 1 then
+
+            Tween(Button, {
+                BackgroundTransparency = 1
+            })
+
+        end
+    end)
+
+    Button.Activated:Connect(function()
+        SelectTab(index)
+    end)
+
+    table.insert(MenuButtons, {
+        Button = Button,
+        Icon = Icon,
+        Indicator = Indicator
+    })
+end
+
+SelectTab(1)
+
+--//==================================================
+--// RESPONSIVE SCALING
+--//==================================================
+
+local Camera = workspace.CurrentCamera
+
+local function UpdateScale()
+
+    Camera = workspace.CurrentCamera
+
+    if not Camera then
+        return
+    end
+
+    local viewport = Camera.ViewportSize
+
+    local horizontalScale =
+        (viewport.X - 20) / CONFIG.WindowSize.X
+
+    local verticalScale =
+        (viewport.Y - 20) / CONFIG.WindowSize.Y
+
+    local calculatedScale =
+        math.min(
+            horizontalScale,
+            verticalScale
+        )
+
+    calculatedScale = math.clamp(
+        calculatedScale,
+        CONFIG.MinScale,
+        CONFIG.MaxScale
+    )
+
+    UIScale.Scale = calculatedScale
+end
+
+UpdateScale()
+
+if Camera then
+
+    Camera:GetPropertyChangedSignal(
+        "ViewportSize"
+    ):Connect(UpdateScale)
+
+end
+
+--//==================================================
+--// DRAG SYSTEM
+--//==================================================
+
+-- FIX:
+-- Old code created a new InputChanged connection
+-- every time dragging started.
+--
+-- This version uses ONE global connection.
+
+local Dragging = false
+
+local DragStart = nil
+
+local StartPosition = nil
+
+local DragInput = nil
+
+local function BeginDrag(input)
+
+    Dragging = true
+
+    DragStart = input.Position
+
+    StartPosition = MainFrame.Position
+
+    DragInput = input
+end
+
+local function EndDrag()
+
+    Dragging = false
+
+    DragStart = nil
+
+    StartPosition = nil
+
+    DragInput = nil
+end
+
+local function UpdateDrag(input)
+
+    if not Dragging then
+        return
+    end
+
+    if not DragStart or not StartPosition then
+        return
+    end
+
+    local Delta = input.Position - DragStart
+
+    MainFrame.Position = UDim2.new(
+        StartPosition.X.Scale,
+        StartPosition.X.Offset + Delta.X,
+
+        StartPosition.Y.Scale,
+        StartPosition.Y.Offset + Delta.Y
+    )
+end
+
+local function ConnectDrag(object)
+
+    object.InputBegan:Connect(function(input)
+
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+
+            BeginDrag(input)
+        end
+    end)
+end
+
+ConnectDrag(TopBar)
+
+ConnectDrag(DragButton)
+
+UserInputService.InputChanged:Connect(function(input)
+
+    if not Dragging then
+        return
+    end
+
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch then
+
+        UpdateDrag(input)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
 
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
 
-        dragging = true
-        dragStart = input.Position
-        startPos = Main.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
+        if Dragging then
+            EndDrag()
+        end
     end
 end)
+
+--//==================================================
+--// REOPEN BUTTON
+--//==================================================
+
+local Closed = false
+
+local ReopenButton = Create("TextButton", {
+    Name = "ReopenButton",
+
+    AnchorPoint = Vector2.new(1, 1),
+
+    Position = UDim2.new(
+        1,
+        -25,
+        1,
+        -25
+    ),
+
+    Size = UDim2.fromOffset(58, 58),
+
+    BackgroundColor3 = COLORS.Accent,
+
+    BorderSizePixel = 0,
+
+    Text = "C",
+
+    TextColor3 = COLORS.White,
+
+    TextSize = 20,
+
+    Font = Enum.Font.GothamBold,
+
+    AutoButtonColor = false,
+
+    Visible = false,
+
+    ZIndex = 100
+}, ScreenGui)
+
+AddCorner(ReopenButton, 29)
+
+AddStroke(
+    ReopenButton,
+    COLORS.White,
+    0.75,
+    1
+)
+
+--//==================================================
+--// CLOSE / REOPEN
+--//==================================================
+
+CloseButton.Activated:Connect(function()
+
+    if Closed then
+        return
+    end
+
+    Closed = true
+
+    Tween(MainFrame, {
+        Size = UDim2.fromOffset(
+            CONFIG.WindowSize.X * 0.92,
+            CONFIG.WindowSize.Y * 0.92
+        )
+    }, 0.15)
+
+    task.wait(0.12)
+
+    MainFrame.Visible = false
+
+    DragButton.Visible = false
+
+    ReopenButton.Visible = true
+end)
+
+ReopenButton.Activated:Connect(function()
+
+    Closed = false
+
+    MainFrame.Visible = true
+
+    DragButton.Visible = true
+
+    MainFrame.Size = UDim2.fromOffset(
+        CONFIG.WindowSize.X * 0.92,
+        CONFIG.WindowSize.Y * 0.92
+    )
+
+    Tween(MainFrame, {
+        Size = UDim2.fromOffset(
+            CONFIG.WindowSize.X,
+            CONFIG.WindowSize.Y
+        )
+    }, 0.18)
+
+    ReopenButton.Visible = false
+
+    task.defer(UpdateScale)
+end)
+
+--//==================================================
+--// KEEP WINDOW WITHIN SCREEN
+--//==================================================
+
+local function ClampWindow()
+
+    Camera = workspace.CurrentCamera
+
+    if not Camera then
+        return
+    end
+
+    local viewport = Camera.ViewportSize
+
+    local scale = UIScale.Scale
+
+    local width =
+        CONFIG.WindowSize.X * scale
+
+    local height =
+        CONFIG.WindowSize.Y * scale
+
+    local halfWidth =
+        width / 2
+
+    local halfHeight =
+        height / 2
+
+    local x =
+        MainFrame.AbsolutePosition.X
+        + width / 2
+
+    local y =
+        MainFrame.AbsolutePosition.Y
+        + height / 2
+
+    local minX =
+        halfWidth + 5
+
+    local maxX =
+        viewport.X
+        - halfWidth
+        - 5
+
+    local minY =
+        halfHeight + 5
+
+    local maxY =
+        viewport.Y
+        - halfHeight
+        - 5
+
+    local targetX = math.clamp(
+        x,
+        minX,
+        math.max(minX, maxX)
+    )
+
+    local targetY = math.clamp(
+        y,
+        minY,
+        math.max(minY, maxY)
+    )
+
+    MainFrame.Position = UDim2.fromOffset(
+        targetX,
+        targetY
+    )
+
+    MainFrame.AnchorPoint =
+        Vector2.new(0.5, 0.5)
+end
 
 UserInputService.InputChanged:Connect(function(input)
 
-    if not dragging then
-        return
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch then
+
+        if Dragging then
+            task.defer(ClampWindow)
+        end
     end
-
-    if input.UserInputType ~= Enum.UserInputType.MouseMovement
-        and input.UserInputType ~= Enum.UserInputType.Touch then
-        return
-    end
-
-    local delta = input.Position - dragStart
-
-    Main.Position = UDim2.new(
-        startPos.X.Scale,
-        startPos.X.Offset + delta.X,
-        startPos.Y.Scale,
-        startPos.Y.Offset + delta.Y
-    )
 end)
 
---==================================================
--- DEBUG SYSTEM
---==================================================
+if Camera then
 
-local Lines = {}
+    Camera:GetPropertyChangedSignal(
+        "ViewportSize"
+    ):Connect(function()
 
-local function Log(text)
-    table.insert(Lines, text)
+        task.defer(ClampWindow)
 
-    if #Lines > 17 then
-        table.remove(Lines, 1)
-    end
-
-    ConsoleOutput.Text = table.concat(Lines, "\n")
-    print("[CSS JAVA] " .. text)
-end
-
-local function GetGlobal(name)
-    local ok, value = pcall(function()
-        return getgenv()[name]
     end)
 
-    if ok then
-        return value
-    end
+end
 
-    local ok2, value2 = pcall(function()
-        return _G[name]
+--//==================================================
+--// MOBILE TOUCH FEEDBACK
+--//==================================================
+
+local function TouchFeedback(button)
+
+    button.InputBegan:Connect(function(input)
+
+        if input.UserInputType == Enum.UserInputType.Touch then
+
+            Tween(button, {
+                BackgroundTransparency = 0.2
+            }, 0.08)
+
+        end
     end)
 
-    if ok2 then
-        return value2
-    end
+    button.InputEnded:Connect(function(input)
 
-    return nil
+        if input.UserInputType == Enum.UserInputType.Touch then
+
+            Tween(button, {
+                BackgroundTransparency = 0.05
+            }, 0.08)
+
+        end
+    end)
 end
 
-local function CheckFunction(name)
-    local value = GetGlobal(name)
+TouchFeedback(CloseButton)
 
-    if typeof(value) == "function" then
-        Log("[PASS] " .. name .. " = function")
-        return value
-    end
+TouchFeedback(DragButton)
 
-    Log("[FAIL] " .. name .. " = " .. typeof(value))
-    return nil
+TouchFeedback(ReopenButton)
+
+for _, data in ipairs(MenuButtons) do
+    TouchFeedback(data.Button)
 end
 
---==================================================
--- START DIAGNOSTICS
---==================================================
+--//==================================================
+--// INITIAL POSITION
+--//==================================================
 
-task.spawn(function()
+task.defer(function()
 
-    task.wait(0.3)
+    UpdateScale()
 
-    Lines = {}
-
-    Log("================================")
-    Log("CSS JAVA / DELTA DIAGNOSTICS")
-    Log("================================")
-
-    -- Roblox environment
-    Log("[INFO] Executor check started")
-
-    local requestFunc = CheckFunction("request")
-    local httpRequestFunc = CheckFunction("http_request")
-    local writeFileFunc = CheckFunction("writefile")
-    local readFileFunc = CheckFunction("readfile")
-    local isFileFunc = CheckFunction("isfile")
-    local makeFolderFunc = CheckFunction("makefolder")
-    local getCustomAssetFunc = CheckFunction("getcustomasset")
-    local getSynAssetFunc = CheckFunction("getsynasset")
-
-    --==================================================
-    -- REQUEST TEST
-    --==================================================
-
-    local req = requestFunc or httpRequestFunc
-
-    if req then
-
-        Log("[TEST] GitHub HTTP request...")
-
-        local success, result = pcall(function()
-
-            return req({
-                Url = RAW_BASE .. "logo.png",
-                Method = "GET"
-            })
-
-        end)
-
-        if success and result then
-
-            local status = result.StatusCode or result.Status or 0
-
-            if tonumber(status) == 200 then
-                Log("[PASS] GitHub request = 200")
-            else
-                Log("[FAIL] HTTP status = " .. tostring(status))
-            end
-
-            if result.Body then
-                Log("[PASS] PNG data received")
-                Log("[INFO] Bytes = " .. tostring(#result.Body))
-            else
-                Log("[FAIL] Response has no Body")
-            end
-
-        else
-            Log("[FAIL] HTTP request error")
-            Log(tostring(result))
-        end
-
-    else
-        Log("[SKIP] No request function")
-    end
-
-    --==================================================
-    -- FILE TEST
-    --==================================================
-
-    if writeFileFunc and readFileFunc and isFileFunc then
-
-        Log("[TEST] File system...")
-
-        local testFile = "CSS_JAVA_DELTA_TEST.txt"
-
-        local writeOK, writeErr = pcall(function()
-            writeFileFunc(testFile, "CSS JAVA TEST")
-        end)
-
-        if writeOK then
-
-            local existsOK, exists = pcall(function()
-                return isFileFunc(testFile)
-            end)
-
-            if existsOK and exists then
-                Log("[PASS] writefile / isfile")
-
-                local readOK, data = pcall(function()
-                    return readFileFunc(testFile)
-                end)
-
-                if readOK and data == "CSS JAVA TEST" then
-                    Log("[PASS] readfile")
-                else
-                    Log("[FAIL] readfile")
-                end
-            else
-                Log("[FAIL] isfile")
-            end
-
-        else
-            Log("[FAIL] writefile")
-            Log(tostring(writeErr))
-        end
-
-    else
-        Log("[SKIP] File system unavailable")
-    end
-
-    --==================================================
-    -- CUSTOM ASSET TEST
-    --==================================================
-
-    local customAsset = getCustomAssetFunc or getSynAssetFunc
-
-    if customAsset then
-        Log("[PASS] Custom asset API available")
-    else
-        Log("[FAIL] No custom asset API")
-    end
-
-    --==================================================
-    -- FINAL
-    --==================================================
-
-    Log("================================")
-    Log("DIAGNOSTICS FINISHED")
-    Log("================================")
+    ClampWindow()
 
 end)
-
---==================================================
--- REOPEN BUTTON
---==================================================
-
-local Reopen = New("TextButton", {
-    Parent = GUI,
-    Visible = false,
-    Size = UDim2.new(0, 120, 0, 40),
-    Position = UDim2.new(0, 20, 0, 20),
-    BackgroundColor3 = Color3.fromRGB(20, 20, 27),
-    BorderSizePixel = 0,
-    Text = "CSS JAVA",
-    Font = Enum.Font.GothamBold,
-    TextSize = 13,
-    TextColor3 = Color3.fromRGB(255, 255, 255),
-    AutoButtonColor = false
-})
-
-Corner(Reopen, 9)
-
-Close.MouseButton1Click:Connect(function()
-    Main.Visible = false
-    Reopen.Visible = true
-end)
-
-Reopen.MouseButton1Click:Connect(function()
-    Main.Visible = true
-    Reopen.Visible = false
-end)
-
---==================================================
--- FINISH
---==================================================
 
 print("[CSS JAVA] GUI loaded successfully.")
-print("[CSS JAVA] Delta diagnostics running...")
