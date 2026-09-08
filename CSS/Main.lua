@@ -13,7 +13,10 @@ local ASSETS = {
     player = RAW_BASE .. "player.png"
 }
 
---// Services
+--//==================================================
+--// SERVICES
+--//==================================================
+
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -33,14 +36,15 @@ local CONFIG = {
 
     CornerRadius = 16,
 
-    -- FIX:
-    -- Было 0.28, из-за чего background.png был прозрачным.
+    -- Full background image
     BackgroundTransparency = 0,
 
-    -- FIX:
-    -- Чем меньше значение, тем сильнее затемнение фона.
-    -- 0.70 = лёгкое затемнение.
-    BackgroundOverlayTransparency = 0.70,
+    -- Darkness over the game/background image.
+    -- Higher = more transparent.
+    BackgroundOverlayTransparency = 0.45,
+
+    -- Darkness of the actual CSS JAVA window.
+    WindowTransparency = 0.04,
 
     SidebarWidth = 225,
 
@@ -54,8 +58,6 @@ local CONFIG = {
 local COLORS = {
     Background = Color3.fromRGB(9, 10, 14),
 
-    -- FIX:
-    -- Панели слегка прозрачные, чтобы фон был виден.
     Panel = Color3.fromRGB(14, 16, 22),
 
     Sidebar = Color3.fromRGB(11, 13, 18),
@@ -118,6 +120,10 @@ local function AddPadding(parent, left, right, top, bottom)
 end
 
 local function Tween(object, properties, duration)
+    if not object then
+        return
+    end
+
     TweenService:Create(
         object,
         TweenInfo.new(
@@ -145,32 +151,29 @@ end
 
 local ScreenGui = Create("ScreenGui", {
     Name = "CSS_JAVA_GUI",
+
     ResetOnSpawn = false,
+
     IgnoreGuiInset = true,
+
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+
     DisplayOrder = 999
 }, CoreGui)
 
 --//==================================================
---// SCALE SYSTEM
+--// FULL SCREEN BACKGROUND
 --//==================================================
 
-local UIScale = Create("UIScale", {
-    Scale = 1
-})
-
---//==================================================
---// BACKGROUND LAYER
---//==================================================
-
--- FIX:
--- Фон теперь НЕ находится внутри MainFrame.
--- Поэтому MainFrame больше не может скрыть background.png.
+-- The background is intentionally OUTSIDE MainFrame.
+-- This allows the game/background image to remain visible
+-- around the CSS JAVA window.
 
 local BackgroundLayer = Create("Frame", {
     Name = "BackgroundLayer",
 
     Position = UDim2.fromScale(0, 0),
+
     Size = UDim2.fromScale(1, 1),
 
     BackgroundTransparency = 1,
@@ -184,32 +187,31 @@ local Background = Create("ImageLabel", {
     Name = "Background",
 
     Position = UDim2.fromScale(0, 0),
+
     Size = UDim2.fromScale(1, 1),
 
     BackgroundTransparency = 1,
 
+    BorderSizePixel = 0,
+
     Image = ASSETS.background,
 
-    -- FIX:
-    -- Раньше было 90,90,100.
-    -- Это серило изображение.
+    -- Do NOT tint the image.
     ImageColor3 = Color3.fromRGB(255, 255, 255),
 
     ImageTransparency = CONFIG.BackgroundTransparency,
 
     ScaleType = Enum.ScaleType.Crop,
 
-    BorderSizePixel = 0,
-
     ZIndex = 0
 }, BackgroundLayer)
 
--- FIX:
--- Лёгкое затемнение поверх background.png.
+-- Dark overlay for the background image.
 local BackgroundOverlay = Create("Frame", {
     Name = "BackgroundOverlay",
 
     Position = UDim2.fromScale(0, 0),
+
     Size = UDim2.fromScale(1, 1),
 
     BackgroundColor3 = Color3.fromRGB(5, 6, 9),
@@ -220,6 +222,14 @@ local BackgroundOverlay = Create("Frame", {
 
     ZIndex = 1
 }, BackgroundLayer)
+
+--//==================================================
+--// SCALE SYSTEM
+--//==================================================
+
+local UIScale = Create("UIScale", {
+    Scale = 1
+})
 
 --//==================================================
 --// MAIN WINDOW
@@ -237,11 +247,9 @@ local MainFrame = Create("Frame", {
         CONFIG.WindowSize.Y
     ),
 
-    -- FIX:
-    -- Было 0.04.
-    -- Теперь основная область окна прозрачная,
-    -- а отдельные панели сами имеют свои цвета.
     BackgroundColor3 = COLORS.Panel,
+
+    -- The actual window is dark.
     BackgroundTransparency = 1,
 
     BorderSizePixel = 0,
@@ -257,25 +265,26 @@ AddCorner(MainFrame, CONFIG.CornerRadius)
 AddStroke(MainFrame, COLORS.Border, 0.2, 1)
 
 --//==================================================
---// WINDOW BACKDROP
+--// WINDOW DARK BACKDROP
 --//==================================================
 
--- FIX:
--- Если хочется чуть затемнить именно область окна,
--- используется отдельный слой.
+-- This is what makes the window dark while the
+-- game remains visible OUTSIDE the window.
+
 local WindowBackdrop = Create("Frame", {
     Name = "WindowBackdrop",
 
     Position = UDim2.fromScale(0, 0),
+
     Size = UDim2.fromScale(1, 1),
 
     BackgroundColor3 = COLORS.Panel,
 
-    BackgroundTransparency = 0.72,
+    BackgroundTransparency = CONFIG.WindowTransparency,
 
     BorderSizePixel = 0,
 
-    ZIndex = 2
+    ZIndex = 3
 }, MainFrame)
 
 AddCorner(WindowBackdrop, CONFIG.CornerRadius)
@@ -418,7 +427,10 @@ local MenuLayout = Create("UIListLayout", {
 local Content = Create("Frame", {
     Name = "Content",
 
-    Position = UDim2.fromOffset(CONFIG.SidebarWidth, 0),
+    Position = UDim2.fromOffset(
+        CONFIG.SidebarWidth,
+        0
+    ),
 
     Size = UDim2.new(
         1,
@@ -589,9 +601,6 @@ local SettingsCard = Create("Frame", {
 
     BackgroundColor3 = COLORS.Card,
 
-    -- FIX:
-    -- Было 0.08. Оставляем лёгкую прозрачность,
-    -- чтобы background немного просвечивал.
     BackgroundTransparency = 0.08,
 
     BorderSizePixel = 0,
@@ -651,6 +660,7 @@ local CardDescription = Create("TextLabel", {
 --//==================================================
 
 local function CreateToggle(parent, text, order)
+
     local Row = Create("Frame", {
         Name = text .. "Row",
 
@@ -733,9 +743,11 @@ local function CreateToggle(parent, text, order)
     local State = false
 
     local function SetState(value)
+
         State = value
 
         if State then
+
             Tween(Toggle, {
                 BackgroundColor3 = COLORS.ToggleOn
             })
@@ -744,7 +756,9 @@ local function CreateToggle(parent, text, order)
                 Position = UDim2.new(1, -26, 0.5, 0),
                 BackgroundColor3 = COLORS.White
             })
+
         else
+
             Tween(Toggle, {
                 BackgroundColor3 = COLORS.ToggleOff
             })
@@ -753,6 +767,7 @@ local function CreateToggle(parent, text, order)
                 Position = UDim2.new(0, 4, 0.5, 0),
                 BackgroundColor3 = COLORS.SecondaryText
             })
+
         end
     end
 
@@ -791,6 +806,8 @@ AddCorner(InfoCard, 14)
 AddStroke(InfoCard, COLORS.Border, 0.3, 1)
 
 local InfoTitle = Create("TextLabel", {
+    Name = "InfoTitle",
+
     Position = UDim2.fromOffset(20, 17),
 
     Size = UDim2.new(1, -40, 0, 23),
@@ -811,6 +828,8 @@ local InfoTitle = Create("TextLabel", {
 }, InfoCard)
 
 local InfoText = Create("TextLabel", {
+    Name = "InfoText",
+
     Position = UDim2.fromOffset(20, 42),
 
     Size = UDim2.new(1, -40, 0, 42),
@@ -858,6 +877,8 @@ AddCorner(PlayerPanel, 12)
 AddStroke(PlayerPanel, COLORS.Border, 0.3, 1)
 
 local PlayerIcon = Create("ImageLabel", {
+    Name = "PlayerIcon",
+
     Position = UDim2.fromOffset(8, 7),
 
     Size = UDim2.fromOffset(40, 40),
@@ -874,6 +895,8 @@ local PlayerIcon = Create("ImageLabel", {
 AddCorner(PlayerIcon, 20)
 
 local PlayerName = Create("TextLabel", {
+    Name = "PlayerName",
+
     Position = UDim2.fromOffset(57, 7),
 
     Size = UDim2.new(1, -65, 0, 22),
@@ -896,6 +919,8 @@ local PlayerName = Create("TextLabel", {
 }, PlayerPanel)
 
 local PlayerRole = Create("TextLabel", {
+    Name = "PlayerRole",
+
     Position = UDim2.fromOffset(57, 28),
 
     Size = UDim2.new(1, -65, 0, 17),
@@ -920,33 +945,44 @@ local PlayerRole = Create("TextLabel", {
 --//==================================================
 
 local MenuItems = {
+
     {
         Name = "AIM",
+
         Icon = ASSETS.aim,
+
         Subtitle = "Basic configuration panel"
     },
 
     {
         Name = "WH",
+
         Icon = ASSETS.wh,
+
         Subtitle = "Visual configuration panel"
     },
 
     {
         Name = "MOVEMENT",
+
         Icon = ASSETS.movement,
+
         Subtitle = "Movement configuration panel"
     },
 
     {
         Name = "OTHER",
+
         Icon = ASSETS.settings,
+
         Subtitle = "Other configuration panel"
     },
 
     {
         Name = "SETTINGS",
+
         Icon = ASSETS.settings,
+
         Subtitle = "Interface settings"
     }
 }
@@ -958,6 +994,7 @@ local MenuButtons = {}
 --//==================================================
 
 local function SelectTab(index)
+
     local selected = MenuItems[index]
 
     if not selected then
@@ -965,14 +1002,17 @@ local function SelectTab(index)
     end
 
     CurrentTitle.Text = selected.Name
+
     CurrentSubtitle.Text = selected.Subtitle
 
     for i, buttonData in ipairs(MenuButtons) do
+
         local Button = buttonData.Button
         local Icon = buttonData.Icon
         local Indicator = buttonData.Indicator
 
         if i == index then
+
             Tween(Button, {
                 BackgroundColor3 = COLORS.Accent,
                 BackgroundTransparency = 0.08
@@ -986,7 +1026,9 @@ local function SelectTab(index)
             Tween(Indicator, {
                 BackgroundTransparency = 0
             })
+
         else
+
             Tween(Button, {
                 BackgroundColor3 = COLORS.Card,
                 BackgroundTransparency = 1
@@ -1000,6 +1042,7 @@ local function SelectTab(index)
             Tween(Indicator, {
                 BackgroundTransparency = 1
             })
+
         end
     end
 end
@@ -1069,6 +1112,8 @@ for index, data in ipairs(MenuItems) do
     }, Button)
 
     local Text = Create("TextLabel", {
+        Name = "Text",
+
         Position = UDim2.fromOffset(54, 0),
 
         Size = UDim2.new(1, -62, 1, 0),
@@ -1089,18 +1134,24 @@ for index, data in ipairs(MenuItems) do
     }, Button)
 
     Button.MouseEnter:Connect(function()
+
         if index ~= 1 then
+
             Tween(Button, {
                 BackgroundTransparency = 0.7
             })
+
         end
     end)
 
     Button.MouseLeave:Connect(function()
+
         if index ~= 1 then
+
             Tween(Button, {
                 BackgroundTransparency = 1
             })
+
         end
     end)
 
@@ -1124,6 +1175,7 @@ SelectTab(1)
 local Camera = workspace.CurrentCamera
 
 local function UpdateScale()
+
     Camera = workspace.CurrentCamera
 
     if not Camera then
@@ -1139,7 +1191,10 @@ local function UpdateScale()
         (viewport.Y - 20) / CONFIG.WindowSize.Y
 
     local calculatedScale =
-        math.min(horizontalScale, verticalScale)
+        math.min(
+            horizontalScale,
+            verticalScale
+        )
 
     calculatedScale = math.clamp(
         calculatedScale,
@@ -1153,33 +1208,60 @@ end
 UpdateScale()
 
 if Camera then
-    Camera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateScale)
+
+    Camera:GetPropertyChangedSignal(
+        "ViewportSize"
+    ):Connect(UpdateScale)
+
 end
 
 --//==================================================
 --// DRAG SYSTEM
 --//==================================================
 
+-- FIX:
+-- Old code created a new InputChanged connection
+-- every time dragging started.
+--
+-- This version uses ONE global connection.
+
 local Dragging = false
+
 local DragStart = nil
+
 local StartPosition = nil
 
+local DragInput = nil
+
 local function BeginDrag(input)
+
     Dragging = true
 
     DragStart = input.Position
 
     StartPosition = MainFrame.Position
 
-    input.Changed:Connect(function()
-        if input.UserInputState == Enum.UserInputState.End then
-            Dragging = false
-        end
-    end)
+    DragInput = input
+end
+
+local function EndDrag()
+
+    Dragging = false
+
+    DragStart = nil
+
+    StartPosition = nil
+
+    DragInput = nil
 end
 
 local function UpdateDrag(input)
+
     if not Dragging then
+        return
+    end
+
+    if not DragStart or not StartPosition then
         return
     end
 
@@ -1188,73 +1270,69 @@ local function UpdateDrag(input)
     MainFrame.Position = UDim2.new(
         StartPosition.X.Scale,
         StartPosition.X.Offset + Delta.X,
+
         StartPosition.Y.Scale,
         StartPosition.Y.Offset + Delta.Y
     )
 end
 
 local function ConnectDrag(object)
+
     object.InputBegan:Connect(function(input)
+
         if input.UserInputType == Enum.UserInputType.MouseButton1
             or input.UserInputType == Enum.UserInputType.Touch then
 
             BeginDrag(input)
         end
     end)
-
-    object.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement
-            or input.UserInputType == Enum.UserInputType.Touch then
-
-            UserInputService.InputChanged:Connect(function(changedInput)
-                if changedInput == input then
-                    UpdateDrag(changedInput)
-                end
-            end)
-        end
-    end)
 end
 
 ConnectDrag(TopBar)
+
 ConnectDrag(DragButton)
 
---//==================================================
---// CLOSE / REOPEN
---//==================================================
+UserInputService.InputChanged:Connect(function(input)
 
-local Closed = false
-
-CloseButton.Activated:Connect(function()
-    if Closed then
+    if not Dragging then
         return
     end
 
-    Closed = true
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch then
 
-    Tween(MainFrame, {
-        Size = UDim2.fromOffset(
-            CONFIG.WindowSize.X * 0.92,
-            CONFIG.WindowSize.Y * 0.92
-        )
-    }, 0.15)
+        UpdateDrag(input)
+    end
+end)
 
-    task.wait(0.12)
+UserInputService.InputEnded:Connect(function(input)
 
-    MainFrame.Visible = false
-    DragButton.Visible = false
-    ReopenButton.Visible = true
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+
+        if Dragging then
+            EndDrag()
+        end
+    end
 end)
 
 --//==================================================
 --// REOPEN BUTTON
 --//==================================================
 
+local Closed = false
+
 local ReopenButton = Create("TextButton", {
     Name = "ReopenButton",
 
     AnchorPoint = Vector2.new(1, 1),
 
-    Position = UDim2.new(1, -25, 1, -25),
+    Position = UDim2.new(
+        1,
+        -25,
+        1,
+        -25
+    ),
 
     Size = UDim2.fromOffset(58, 58),
 
@@ -1278,12 +1356,48 @@ local ReopenButton = Create("TextButton", {
 }, ScreenGui)
 
 AddCorner(ReopenButton, 29)
-AddStroke(ReopenButton, COLORS.White, 0.75, 1)
+
+AddStroke(
+    ReopenButton,
+    COLORS.White,
+    0.75,
+    1
+)
+
+--//==================================================
+--// CLOSE / REOPEN
+--//==================================================
+
+CloseButton.Activated:Connect(function()
+
+    if Closed then
+        return
+    end
+
+    Closed = true
+
+    Tween(MainFrame, {
+        Size = UDim2.fromOffset(
+            CONFIG.WindowSize.X * 0.92,
+            CONFIG.WindowSize.Y * 0.92
+        )
+    }, 0.15)
+
+    task.wait(0.12)
+
+    MainFrame.Visible = false
+
+    DragButton.Visible = false
+
+    ReopenButton.Visible = true
+end)
 
 ReopenButton.Activated:Connect(function()
+
     Closed = false
 
     MainFrame.Visible = true
+
     DragButton.Visible = true
 
     MainFrame.Size = UDim2.fromOffset(
@@ -1308,6 +1422,7 @@ end)
 --//==================================================
 
 local function ClampWindow()
+
     Camera = workspace.CurrentCamera
 
     if not Camera then
@@ -1318,20 +1433,41 @@ local function ClampWindow()
 
     local scale = UIScale.Scale
 
-    local width = CONFIG.WindowSize.X * scale
-    local height = CONFIG.WindowSize.Y * scale
+    local width =
+        CONFIG.WindowSize.X * scale
 
-    local halfWidth = width / 2
-    local halfHeight = height / 2
+    local height =
+        CONFIG.WindowSize.Y * scale
 
-    local x = MainFrame.AbsolutePosition.X + width / 2
-    local y = MainFrame.AbsolutePosition.Y + height / 2
+    local halfWidth =
+        width / 2
 
-    local minX = halfWidth + 5
-    local maxX = viewport.X - halfWidth - 5
+    local halfHeight =
+        height / 2
 
-    local minY = halfHeight + 5
-    local maxY = viewport.Y - halfHeight - 5
+    local x =
+        MainFrame.AbsolutePosition.X
+        + width / 2
+
+    local y =
+        MainFrame.AbsolutePosition.Y
+        + height / 2
+
+    local minX =
+        halfWidth + 5
+
+    local maxX =
+        viewport.X
+        - halfWidth
+        - 5
+
+    local minY =
+        halfHeight + 5
+
+    local maxY =
+        viewport.Y
+        - halfHeight
+        - 5
 
     local targetX = math.clamp(
         x,
@@ -1350,10 +1486,12 @@ local function ClampWindow()
         targetY
     )
 
-    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    MainFrame.AnchorPoint =
+        Vector2.new(0.5, 0.5)
 end
 
 UserInputService.InputChanged:Connect(function(input)
+
     if input.UserInputType == Enum.UserInputType.MouseMovement
         or input.UserInputType == Enum.UserInputType.Touch then
 
@@ -1364,9 +1502,15 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 if Camera then
-    Camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+
+    Camera:GetPropertyChangedSignal(
+        "ViewportSize"
+    ):Connect(function()
+
         task.defer(ClampWindow)
+
     end)
+
 end
 
 --//==================================================
@@ -1374,25 +1518,34 @@ end
 --//==================================================
 
 local function TouchFeedback(button)
+
     button.InputBegan:Connect(function(input)
+
         if input.UserInputType == Enum.UserInputType.Touch then
+
             Tween(button, {
                 BackgroundTransparency = 0.2
             }, 0.08)
+
         end
     end)
 
     button.InputEnded:Connect(function(input)
+
         if input.UserInputType == Enum.UserInputType.Touch then
+
             Tween(button, {
                 BackgroundTransparency = 0.05
             }, 0.08)
+
         end
     end)
 end
 
 TouchFeedback(CloseButton)
+
 TouchFeedback(DragButton)
+
 TouchFeedback(ReopenButton)
 
 for _, data in ipairs(MenuButtons) do
@@ -1404,8 +1557,11 @@ end
 --//==================================================
 
 task.defer(function()
+
     UpdateScale()
+
     ClampWindow()
+
 end)
 
 print("[CSS JAVA] GUI loaded successfully.")
