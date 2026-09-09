@@ -1,7 +1,6 @@
 --// CSS JAVA - Visual redesign
 --// Window size locked: 1000 x 620
---// Home + session balance + cleaned Aim tab
---// WH / ESP + Speed Hack added from previous version
+--// Home + session balance + WH/ESP + SpeedHack + Speed Car (with speed control)
 
 local RAW_BASE = "https://raw.githubusercontent.com/ebaaalcyky-collab/Css-Java-Osnova/main/assets/"
 
@@ -39,7 +38,6 @@ local COLORS = {
     Plus = Color3.fromRGB(80, 220, 140),
     Minus = Color3.fromRGB(255, 92, 108),
 
-    --// Compatibility colors for the old WH / speed-hack function
     SecondaryText = Color3.fromRGB(158, 164, 180),
     ToggleOff = Color3.fromRGB(40, 44, 58),
     ToggleOn = Color3.fromRGB(124, 82, 255),
@@ -556,7 +554,7 @@ local Sidebar = Create("Frame", {
     BackgroundTransparency = 0.08,
     BorderSizePixel = 0,
     ZIndex = 5
-}, MainFrame)
+}, Sidebar)
 
 local Brand = Create("Frame", {
     Position = UDim2.fromOffset(20, 24),
@@ -937,8 +935,6 @@ local WhCard = Card(
 Badge(WhCard, "VISUALS")
 Heading(WhCard, "Display")
 
---// ESP SETTINGS STATE
-
 local ESP_SETTINGS = {
     Enabled = false,
     Roles = true,
@@ -947,13 +943,9 @@ local ESP_SETTINGS = {
     Distance = true
 }
 
---// MAIN ESP TOGGLE
-
 CreateToggle(WhCard, "Wh", 60, function(state)
     ESP_SETTINGS.Enabled = state
 end)
-
---// DROPDOWN ARROW BUTTON
 
 local DropdownButton = Create("TextButton", {
     Name = "DropdownButton",
@@ -974,21 +966,12 @@ DropdownButton.Activated:Connect(function()
 
     if isDropdownOpen then
         DropdownButton.Text = "▲"
-
-        Tween(WhCard, {
-            Size = UDim2.new(1, -56, 0, 350)
-        })
-
+        Tween(WhCard, { Size = UDim2.new(1, -56, 0, 350) })
     else
         DropdownButton.Text = "▼"
-
-        Tween(WhCard, {
-            Size = UDim2.new(1, -56, 0, 130)
-        })
+        Tween(WhCard, { Size = UDim2.new(1, -56, 0, 130) })
     end
 end)
-
---// DROPDOWN SUB-SETTINGS
 
 local SubContainer = Create("Frame", {
     Name = "SubContainer",
@@ -1036,7 +1019,6 @@ local function CreateEspForPlayer(plr)
 
         ClearEsp(plr)
 
-        -- Highlight
         local hl = Instance.new("Highlight")
         hl.Name = "CSS_ESP_HL"
         hl.Adornee = character
@@ -1047,7 +1029,6 @@ local function CreateEspForPlayer(plr)
         hl.Enabled = false
         hl.Parent = character
 
-        -- BillboardGui
         local bb = Instance.new("BillboardGui")
         bb.Name = "CSS_ESP_GUI"
         bb.Adornee = character:FindFirstChild("Head") or character:FindFirstChild("HumanoidRootPart")
@@ -1062,7 +1043,6 @@ local function CreateEspForPlayer(plr)
         container.BackgroundTransparency = 1
         container.Parent = bb
 
-        -- Name
         local nameLabel = Instance.new("TextLabel")
         nameLabel.Name = "NameLabel"
         nameLabel.Size = UDim2.new(1, 0, 0, 16)
@@ -1075,7 +1055,6 @@ local function CreateEspForPlayer(plr)
         nameLabel.TextStrokeTransparency = 0.3
         nameLabel.Parent = container
 
-        -- Role
         local roleLabel = Instance.new("TextLabel")
         roleLabel.Name = "RoleLabel"
         roleLabel.Size = UDim2.new(1, 0, 0, 14)
@@ -1088,7 +1067,6 @@ local function CreateEspForPlayer(plr)
         roleLabel.TextStrokeTransparency = 0.4
         roleLabel.Parent = container
 
-        -- Health & Armor text/bar
         local statsLabel = Instance.new("TextLabel")
         statsLabel.Name = "StatsLabel"
         statsLabel.Size = UDim2.new(1, 0, 0, 14)
@@ -1101,7 +1079,6 @@ local function CreateEspForPlayer(plr)
         statsLabel.TextStrokeTransparency = 0.5
         statsLabel.Parent = container
 
-        -- Distance
         local distLabel = Instance.new("TextLabel")
         distLabel.Name = "DistLabel"
         distLabel.Size = UDim2.new(1, 0, 0, 14)
@@ -1131,16 +1108,10 @@ RunService.RenderStepped:Connect(function()
                 local gui = plr.Character:FindFirstChild("CSS_ESP_GUI")
                 local hl = plr.Character:FindFirstChild("CSS_ESP_HL")
 
-                if gui then
-                    gui.Enabled = false
-                end
-
-                if hl then
-                    hl.Enabled = false
-                end
+                if gui then gui.Enabled = false end
+                if hl then hl.Enabled = false end
             end
         end
-
         return
     end
 
@@ -1157,7 +1128,6 @@ RunService.RenderStepped:Connect(function()
 
             if not gui or not hl then
                 CreateEspForPlayer(plr)
-
                 gui = char:FindFirstChild("CSS_ESP_GUI")
                 hl = char:FindFirstChild("CSS_ESP_HL")
             end
@@ -1170,24 +1140,20 @@ RunService.RenderStepped:Connect(function()
                     hl.Enabled = true
 
                     local container = gui:FindFirstChild("Container")
-
                     if container then
                         local roleLbl = container:FindFirstChild("RoleLabel")
                         local statsLbl = container:FindFirstChild("StatsLabel")
                         local distLbl = container:FindFirstChild("DistLabel")
 
-                        -- Roles visibility
                         if roleLbl then
                             roleLbl.Visible = ESP_SETTINGS.Roles
                             roleLbl.Text = "[" .. GetRussianRole(plr) .. "]"
                         end
 
-                        -- Health / Armor logic
                         if statsLbl then
                             local humanoid = char:FindFirstChildOfClass("Humanoid")
                             local hp = humanoid and math.floor(humanoid.Health) or 0
 
-                            -- Armor check (leaderstats or Armor object)
                             local armor = 0
                             local ls = plr:FindFirstChild("leaderstats")
 
@@ -1198,26 +1164,18 @@ RunService.RenderStepped:Connect(function()
                             end
 
                             local textParts = {}
-
-                            if ESP_SETTINGS.Health then
-                                table.insert(textParts, "HP: " .. hp)
-                            end
-
-                            if ESP_SETTINGS.Armor then
-                                table.insert(textParts, "AP: " .. armor)
-                            end
+                            if ESP_SETTINGS.Health then table.insert(textParts, "HP: " .. hp) end
+                            if ESP_SETTINGS.Armor then table.insert(textParts, "AP: " .. armor) end
 
                             statsLbl.Text = table.concat(textParts, " | ")
                             statsLbl.Visible = (ESP_SETTINGS.Health or ESP_SETTINGS.Armor)
                         end
 
-                        -- Distance visibility
                         if distLbl then
                             distLbl.Visible = ESP_SETTINGS.Distance
                             distLbl.Text = math.floor(distance) .. " m"
                         end
                     end
-
                 else
                     gui.Enabled = false
                     hl.Enabled = false
@@ -1242,23 +1200,21 @@ local MovementCard = Card(
     MovementPage,
     "MoveCard",
     UDim2.fromOffset(28, 92),
-    UDim2.new(1, -56, 0, 140)
+    UDim2.new(1, -56, 0, 180)
 )
 
 Badge(MovementCard, "MOVEMENT")
 Heading(MovementCard, "Motion")
 
---// SPEED-HACK = 33
+--// 1) SPEED-HACK (WALKSPEED)
 
 local speedHackEnabled = false
 
 RunService.RenderStepped:Connect(function()
     if speedHackEnabled then
         local character = Player.Character
-
         if character then
             local humanoid = character:FindFirstChildOfClass("Humanoid")
-
             if humanoid then
                 humanoid.WalkSpeed = 33
             end
@@ -1266,18 +1222,168 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-CreateToggle(MovementCard, "speed-hack", 72, function(state)
+CreateToggle(MovementCard, "speed-hack", 68, function(state)
     speedHackEnabled = state
-
     if not state then
         local character = Player.Character
-
         if character then
             local humanoid = character:FindFirstChildOfClass("Humanoid")
-
             if humanoid then
                 humanoid.WalkSpeed = 16
             end
+        end
+    end
+end)
+
+--// 2) SPEED CAR LOGIC WITH MULTIPLIER REGULATION
+
+local carSpeedMultiplier = 2
+local speedCarEnabled = false
+local boostedSeats = {}
+local Connections = {}
+
+local function updateSeatSpeed(seat)
+    if not seat:IsA("VehicleSeat") then return end
+
+    if not boostedSeats[seat] then
+        boostedSeats[seat] = seat.MaxSpeed
+    end
+
+    if speedCarEnabled then
+        pcall(function()
+            seat.MaxSpeed = boostedSeats[seat] * carSpeedMultiplier
+        end)
+    else
+        pcall(function()
+            seat.MaxSpeed = boostedSeats[seat]
+        end)
+    end
+end
+
+local function applySpeedCarToAll()
+    for _, object in ipairs(workspace:GetDescendants()) do
+        if object:IsA("VehicleSeat") then
+            updateSeatSpeed(object)
+        end
+    end
+end
+
+local function enableSpeedCar()
+    speedCarEnabled = true
+    applySpeedCarToAll()
+
+    Connections.DescendantAdded = workspace.DescendantAdded:Connect(function(object)
+        if object:IsA("VehicleSeat") then
+            updateSeatSpeed(object)
+        end
+    end)
+end
+
+local function disableSpeedCar()
+    speedCarEnabled = false
+    
+    for connName, conn in pairs(Connections) do
+        if conn then
+            conn:Disconnect()
+            Connections[connName] = nil
+        end
+    end
+
+    for seat, originalSpeed in pairs(boostedSeats) do
+        if seat and seat.Parent then
+            pcall(function()
+                seat.MaxSpeed = originalSpeed
+            end)
+        end
+    end
+    
+    table.clear(boostedSeats)
+end
+
+-- SPEED CAR TOGGLE & CONTROLS UI
+
+CreateToggle(MovementCard, "speed car", 120, function(state)
+    if state then
+        enableSpeedCar()
+        Tween(MovementCard, { Size = UDim2.new(1, -56, 0, 235) })
+    else
+        disableSpeedCar()
+        Tween(MovementCard, { Size = UDim2.new(1, -56, 0, 180) })
+    end
+end)
+
+local CarSpeedControlRow = Create("Frame", {
+    Name = "CarSpeedControlRow",
+    Position = UDim2.fromOffset(20, 172),
+    Size = UDim2.new(1, -40, 0, 44),
+    BackgroundTransparency = 1,
+    ZIndex = 10
+}, MovementCard)
+
+Create("TextLabel", {
+    Position = UDim2.fromOffset(0, 0),
+    Size = UDim2.new(1, -140, 1, 0),
+    BackgroundTransparency = 1,
+    Text = "Car Multiplier",
+    TextColor3 = COLORS.Dim,
+    TextSize = 12,
+    Font = Enum.Font.GothamMedium,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 11
+}, CarSpeedControlRow)
+
+local MultiplierDisplay = Create("TextLabel", {
+    Position = UDim2.new(1, -135, 0, 7),
+    Size = UDim2.fromOffset(45, 30),
+    BackgroundColor3 = COLORS.CardInner,
+    Text = "x" .. tostring(carSpeedMultiplier),
+    TextColor3 = COLORS.Text,
+    TextSize = 13,
+    Font = Enum.Font.GothamBold,
+    ZIndex = 11
+}, CarSpeedControlRow)
+Corner(MultiplierDisplay, 8)
+
+local BtnMinus = Create("TextButton", {
+    Position = UDim2.new(1, -85, 0, 7),
+    Size = UDim2.fromOffset(38, 30),
+    BackgroundColor3 = COLORS.CardInner,
+    Text = "-",
+    TextColor3 = COLORS.Minus,
+    TextSize = 16,
+    Font = Enum.Font.GothamBold,
+    ZIndex = 11
+}, CarSpeedControlRow)
+Corner(BtnMinus, 8)
+
+local BtnPlus = Create("TextButton", {
+    Position = UDim2.new(1, -42, 0, 7),
+    Size = UDim2.fromOffset(38, 30),
+    BackgroundColor3 = COLORS.CardInner,
+    Text = "+",
+    TextColor3 = COLORS.Plus,
+    TextSize = 16,
+    Font = Enum.Font.GothamBold,
+    ZIndex = 11
+}, CarSpeedControlRow)
+Corner(BtnPlus, 8)
+
+BtnMinus.Activated:Connect(function()
+    if carSpeedMultiplier > 1 then
+        carSpeedMultiplier = carSpeedMultiplier - 1
+        MultiplierDisplay.Text = "x" .. tostring(carSpeedMultiplier)
+        if speedCarEnabled then
+            applySpeedCarToAll()
+        end
+    end
+end)
+
+BtnPlus.Activated:Connect(function()
+    if carSpeedMultiplier < 10 then
+        carSpeedMultiplier = carSpeedMultiplier + 1
+        MultiplierDisplay.Text = "x" .. tostring(carSpeedMultiplier)
+        if speedCarEnabled then
+            applySpeedCarToAll()
         end
     end
 end)
@@ -1491,17 +1597,13 @@ for index, data in ipairs(MenuItems) do
 
     button.MouseEnter:Connect(function()
         if not data.Page.Visible then
-            Tween(button, {
-                BackgroundTransparency = 0.65
-            })
+            Tween(button, { BackgroundTransparency = 0.65 })
         end
     end)
 
     button.MouseLeave:Connect(function()
         if not data.Page.Visible then
-            Tween(button, {
-                BackgroundTransparency = 1
-            })
+            Tween(button, { BackgroundTransparency = 1 })
         end
     end)
 
@@ -1633,9 +1735,7 @@ local function isMoneyName(name)
 end
 
 local function readNumber(obj)
-    if not obj then
-        return nil
-    end
+    if not obj then return nil end
 
     if obj:IsA("IntValue")
         or obj:IsA("NumberValue")
@@ -1657,14 +1757,9 @@ local function readNumber(obj)
 end
 
 local function parseCompact(text)
-    if type(text) ~= "string" then
-        return nil
-    end
+    if type(text) ~= "string" then return nil end
 
-    local raw = text
-        :gsub("%s+", "")
-        :gsub("%$", "")
-
+    local raw = text:gsub("%s+", ""):gsub("%$", "")
     local lower = raw:lower()
     local mult = 1
 
@@ -1677,10 +1772,7 @@ local function parseCompact(text)
     end
 
     local num = raw:match("(%d+[%.,]?%d*)")
-
-    if not num then
-        return nil
-    end
+    if not num then return nil end
 
     if mult > 1 then
         num = num:gsub(",", ".")
@@ -1689,33 +1781,20 @@ local function parseCompact(text)
     end
 
     local n = tonumber(num)
-
-    if not n then
-        return nil
-    end
+    if not n then return nil end
 
     return n * mult
 end
 
 local function looksLikeXP(text, name)
-    local blob = string.lower(
-        (text or "") .. " " .. (name or "")
-    )
-
-    return blob:find("опыт")
-        or blob:find("xp")
-        or blob:find("exp")
-        or blob:find("/")
+    local blob = string.lower((text or "") .. " " .. (name or ""))
+    return blob:find("опыт") or blob:find("xp") or blob:find("exp") or blob:find("/")
 end
 
 local function parseXP(text)
-    if type(text) ~= "string" then
-        return nil
-    end
+    if type(text) ~= "string" then return nil end
 
-    local a, b = text:match(
-        "([%d%s,%.]+)%s*/%s*([%d%s,%.]+)"
-    )
+    local a, b = text:match("([%d%s,%.]+)%s*/%s*([%d%s,%.]+)")
 
     if a then
         a = a:gsub("%s", ""):gsub(",", "")
@@ -1734,10 +1813,7 @@ local function findMoneyAndXP()
     local xp, xpSrc = nil, nil
 
     local function takeMoney(n, label)
-        if type(n) ~= "number" then
-            return
-        end
-
+        if type(n) ~= "number" then return end
         if money == nil or n > money then
             money = n
             moneySrc = label
@@ -1745,10 +1821,7 @@ local function findMoneyAndXP()
     end
 
     local function takeXP(n, label)
-        if type(n) ~= "number" then
-            return
-        end
-
+        if type(n) ~= "number" then return end
         if xp == nil or n > xp then
             xp = n
             xpSrc = label
@@ -1759,66 +1832,38 @@ local function findMoneyAndXP()
 
     if pg then
         for _, obj in ipairs(pg:GetDescendants()) do
-            if obj:IsA("TextLabel")
-                or obj:IsA("TextButton") then
-
+            if obj:IsA("TextLabel") or obj:IsA("TextButton") then
                 local t = obj.Text or ""
                 local n = obj.Name or ""
 
-                if t:find("%$")
-                    and not looksLikeXP(t, n) then
-
+                if t:find("%$") and not looksLikeXP(t, n) then
                     local v = parseCompact(t)
-
-                    if v and v > 0 then
-                        takeMoney(v, "hud." .. n)
-                    end
-
+                    if v and v > 0 then takeMoney(v, "hud." .. n) end
                 elseif looksLikeXP(t, n) then
                     local v = parseXP(t)
-
-                    if v and v > 0 then
-                        takeXP(v, "hud." .. n)
-                    end
+                    if v and v > 0 then takeXP(v, "hud." .. n) end
                 end
             end
         end
     end
 
     local function scan(root, prefix)
-        if not root then
-            return
-        end
-
+        if not root then return end
         for _, obj in ipairs(root:GetDescendants()) do
             if isMoneyName(obj.Name) then
                 local v = readNumber(obj)
-
-                if v then
-                    takeMoney(v, prefix .. obj.Name)
-                end
+                if v then takeMoney(v, prefix .. obj.Name) end
             end
 
             local lname = string.lower(obj.Name)
-
-            if lname:find("xp")
-                or lname:find("exp")
-                or lname:find("опыт") then
-
+            if lname:find("xp") or lname:find("exp") or lname:find("опыт") then
                 local v = readNumber(obj)
-
-                if v then
-                    takeXP(v, prefix .. obj.Name)
-                end
+                if v then takeXP(v, prefix .. obj.Name) end
             end
         end
     end
 
-    scan(
-        Player:FindFirstChild("leaderstats"),
-        "leaderstats."
-    )
-
+    scan(Player:FindFirstChild("leaderstats"), "leaderstats.")
     scan(Player, "player.")
 
     return money, moneySrc, xp, xpSrc
@@ -1835,17 +1880,9 @@ local function formatMoney(n)
     local out = s
 
     while true do
-        local nexts, count = string.gsub(
-            out,
-            "^(-?%d+)(%d%d%d)",
-            "%1 %2"
-        )
-
+        local nexts, count = string.gsub(out, "^(-?%d+)(%d%d%d)", "%1 %2")
         out = nexts
-
-        if count == 0 then
-            break
-        end
+        if count == 0 then break end
     end
 
     return sign .. out
@@ -1855,11 +1892,9 @@ local function paintDiff(label, diff, suffix)
     if diff > 0 then
         label.Text = "+" .. formatMoney(diff) .. suffix
         label.TextColor3 = COLORS.Plus
-
     elseif diff < 0 then
         label.Text = "-" .. formatMoney(math.abs(diff)) .. suffix
         label.TextColor3 = COLORS.Minus
-
     else
         label.Text = "0" .. suffix
         label.TextColor3 = COLORS.Text
@@ -1871,18 +1906,11 @@ task.spawn(function()
         local now, _, xpNow = findMoneyAndXP()
 
         if now ~= nil then
-            if startMoney == nil then
-                startMoney = now
-            end
+            if startMoney == nil then startMoney = now end
 
             StartValue.Text = formatMoney(startMoney) .. "$"
             NowValue.Text = formatMoney(now) .. "$"
-
-            paintDiff(
-                DiffValue,
-                now - startMoney,
-                "$"
-            )
+            paintDiff(DiffValue, now - startMoney, "$")
         else
             StartValue.Text = "—"
             NowValue.Text = "—"
@@ -1891,18 +1919,11 @@ task.spawn(function()
         end
 
         if xpNow ~= nil then
-            if startXP == nil then
-                startXP = xpNow
-            end
+            if startXP == nil then startXP = xpNow end
 
             XpStartValue.Text = formatMoney(startXP)
             XpNowValue.Text = formatMoney(xpNow)
-
-            paintDiff(
-                XpDiffValue,
-                xpNow - startXP,
-                " XP"
-            )
+            paintDiff(XpDiffValue, xpNow - startXP, " XP")
         else
             XpStartValue.Text = "—"
             XpNowValue.Text = "—"
@@ -1922,18 +1943,11 @@ local cam = workspace.CurrentCamera
 
 local function UpdateScale()
     cam = workspace.CurrentCamera
-
-    if not cam then
-        return
-    end
+    if not cam then return end
 
     local v = cam.ViewportSize
-
     UIScale.Scale = math.clamp(
-        math.min(
-            (v.X - 20) / 1000,
-            (v.Y - 20) / 620
-        ),
+        math.min((v.X - 20) / 1000, (v.Y - 20) / 620),
         CONFIG.MinScale,
         CONFIG.MaxScale
     )
@@ -1968,13 +1982,9 @@ bindDrag(DragButton)
 
 UserInputService.InputChanged:Connect(function(input)
     if dragging
-        and (
-            input.UserInputType == Enum.UserInputType.MouseMovement
-            or input.UserInputType == Enum.UserInputType.Touch
-        ) then
+        and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 
         local d = input.Position - dragStart
-
         MainFrame.Position = UDim2.new(
             startPos.X.Scale,
             startPos.X.Offset + d.X,
@@ -1987,7 +1997,6 @@ end)
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
-
         dragging = false
     end
 end)
@@ -2016,13 +2025,10 @@ Stroke(reopen, COLORS.Accent, 0.2, 2)
 
 task.spawn(function()
     for _ = 1, 40 do
-        if _G.CSS_JAVA_AVATAR
-            and _G.CSS_JAVA_AVATAR ~= "" then
-
+        if _G.CSS_JAVA_AVATAR and _G.CSS_JAVA_AVATAR ~= "" then
             reopen.Image = _G.CSS_JAVA_AVATAR
             break
         end
-
         task.wait(0.1)
     end
 end)
@@ -2042,17 +2048,9 @@ reopen.InputBegan:Connect(function(input)
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if rDrag
-        and (
-            input.UserInputType == Enum.UserInputType.MouseMovement
-            or input.UserInputType == Enum.UserInputType.Touch
-        ) then
-
+    if rDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local d = input.Position - rStart
-
-        if d.Magnitude > 5 then
-            rMoved = true
-        end
+        if d.Magnitude > 5 then rMoved = true end
 
         reopen.Position = UDim2.new(
             rPos.X.Scale,
@@ -2066,7 +2064,6 @@ end)
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
-
         rDrag = false
     end
 end)
@@ -2076,10 +2073,7 @@ end)
 --//==================================================
 
 CloseButton.Activated:Connect(function()
-    if closed then
-        return
-    end
-
+    if closed then return end
     closed = true
 
     Tween(MainFrame, {
@@ -2087,10 +2081,7 @@ CloseButton.Activated:Connect(function()
         BackgroundTransparency = 0.4
     }, 0.16)
 
-    Tween(BackgroundLayer, {
-        BackgroundTransparency = 1
-    }, 0.16)
-
+    Tween(BackgroundLayer, { BackgroundTransparency = 1 }, 0.16)
     task.wait(0.14)
 
     BackgroundLayer.Visible = false
@@ -2099,10 +2090,7 @@ CloseButton.Activated:Connect(function()
     MiniHud.Visible = true
 
     reopen.Size = UDim2.fromOffset(32, 32)
-
-    Tween(reopen, {
-        Size = UDim2.fromOffset(40, 40)
-    }, 0.18)
+    Tween(reopen, { Size = UDim2.fromOffset(40, 40) }, 0.18)
 end)
 
 reopen.Activated:Connect(function()
@@ -2112,7 +2100,6 @@ reopen.Activated:Connect(function()
     end
 
     closed = false
-
     MiniHud.Visible = false
     reopen.Visible = false
     BackgroundLayer.Visible = true
@@ -2128,4 +2115,4 @@ reopen.Activated:Connect(function()
     task.defer(UpdateScale)
 end)
 
-print("[CSS JAVA] Home + session balance + WH + SpeedHack loaded")
+print("[CSS JAVA] Speed car controls updated successfully!")
