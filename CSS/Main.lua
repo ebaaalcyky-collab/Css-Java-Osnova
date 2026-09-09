@@ -19,7 +19,6 @@ local CONFIG = {
     MaxScale = 1,
     SidebarWidth = 236,
     AnimationTime = 0.18,
-
     MaxEspDistance = 250
 }
 
@@ -107,7 +106,6 @@ local function PaintIcon(parent, kind, color)
 
     if kind == "home" then
         Pixel(box, UDim2.fromOffset(3, 11), UDim2.fromOffset(16, 9), color, 13)
-
         local roof = Create("Frame", {
             Position = UDim2.fromOffset(2, 6),
             Size = UDim2.fromOffset(18, 8),
@@ -116,7 +114,6 @@ local function PaintIcon(parent, kind, color)
             BorderSizePixel = 0,
             ZIndex = 12
         }, box)
-
         Corner(roof, 2)
         Pixel(box, UDim2.fromOffset(9, 13), UDim2.fromOffset(4, 7), COLORS.Side, 14)
 
@@ -128,7 +125,6 @@ local function PaintIcon(parent, kind, color)
             BackgroundTransparency = 1,
             ZIndex = 12
         }, box)
-
         Stroke(ring, color, 0, 2)
         Corner(ring, 8)
 
@@ -145,7 +141,6 @@ local function PaintIcon(parent, kind, color)
             BorderSizePixel = 0,
             ZIndex = 13
         }, box)
-
         Corner(dot, 2)
 
     elseif kind == "wh" then
@@ -156,7 +151,6 @@ local function PaintIcon(parent, kind, color)
             BackgroundTransparency = 1,
             ZIndex = 12
         }, box)
-
         Stroke(eye, color, 0, 2)
         Corner(eye, 8)
 
@@ -168,7 +162,6 @@ local function PaintIcon(parent, kind, color)
             BorderSizePixel = 0,
             ZIndex = 13
         }, box)
-
         Corner(pupil, 3)
 
     elseif kind == "move" then
@@ -193,7 +186,6 @@ local function PaintIcon(parent, kind, color)
             BackgroundTransparency = 1,
             ZIndex = 12
         }, box)
-
         Stroke(gear, color, 0, 2)
         Corner(gear, 7)
 
@@ -205,13 +197,11 @@ local function PaintIcon(parent, kind, color)
             BorderSizePixel = 0,
             ZIndex = 13
         }, box)
-
         Corner(hole, 3)
 
     elseif kind == "close" then
         local a = Pixel(box, UDim2.fromOffset(5, 10), UDim2.fromOffset(12, 2), color, 13)
         a.Rotation = 45
-
         local b = Pixel(box, UDim2.fromOffset(5, 10), UDim2.fromOffset(12, 2), color, 13)
         b.Rotation = -45
 
@@ -226,77 +216,35 @@ local function PaintIcon(parent, kind, color)
     return box
 end
 
---//==================================================
---// TRANSLATIONS
---//==================================================
-
+--// ROLES & TRANSLATIONS
 local ROLE_TRANSLATIONS = {
-    ["police"] = "Полиция",
-    ["cop"] = "Полицейский",
-    ["sheriff"] = "Шериф",
-    ["deputy"] = "Помощник шерифа",
-    ["border patrol"] = "Погранслужба",
-    ["border"] = "Пограничник",
-    ["military"] = "Военный",
-    ["army"] = "Армия",
-    ["swat"] = "Спецназ",
-    ["fbi"] = "ФБР",
-    ["civilian"] = "Гражданский",
-    ["civ"] = "Гражданский",
-    ["citizen"] = "Житель",
-    ["criminal"] = "Преступник",
-    ["illegal"] = "Нелегал",
-    ["rebel"] = "Повстанец",
-    ["cartel"] = "Картель",
-    ["mafia"] = "Мафия",
-    ["gang"] = "Бандит",
-    ["prisoner"] = "Заключенный",
-    ["guard"] = "Охранник",
-    ["doctor"] = "Врач",
-    ["medic"] = "Медик",
-    ["firefighter"] = "Пожарный",
-    ["neutral"] = "Нейтрал"
+    ["police"] = "Полиция", ["cop"] = "Полицейский", ["sheriff"] = "Шериф", ["deputy"] = "Помощник шерифа",
+    ["border patrol"] = "Погранслужба", ["border"] = "Пограничник", ["military"] = "Военный", ["army"] = "Армия",
+    ["swat"] = "Спецназ", ["fbi"] = "ФБР", ["civilian"] = "Гражданский", ["civ"] = "Гражданский", ["citizen"] = "Житель",
+    ["criminal"] = "Преступник", ["illegal"] = "Нелегал", ["rebel"] = "Повстанец", ["cartel"] = "Картель",
+    ["mafia"] = "Мафия", ["gang"] = "Бандит", ["prisoner"] = "Заключенный", ["guard"] = "Охранник",
+    ["doctor"] = "Врач", ["medic"] = "Медик", ["firefighter"] = "Пожарный", ["neutral"] = "Нейтрал"
 }
 
 local function GetRussianRole(plr)
-    local rawRole = ""
-    
-    if plr.Team then
-        rawRole = plr.Team.Name
-    end
-    
+    local rawRole = plr.Team and plr.Team.Name or ""
     if rawRole == "" or rawRole == "Choosing" then
         local ls = plr:FindFirstChild("leaderstats")
         if ls then
             local roleVal = ls:FindFirstChild("Role") or ls:FindFirstChild("Team") or ls:FindFirstChild("Job")
-            if roleVal then
-                rawRole = tostring(roleVal.Value)
-            end
+            if roleVal then rawRole = tostring(roleVal.Value) end
         end
     end
-    
-    if rawRole == "" then
-        return "Игрок"
-    end
-    
+    if rawRole == "" then return "Игрок" end
     local lower = string.lower(rawRole)
     for key, ru in pairs(ROLE_TRANSLATIONS) do
-        if string.find(lower, key) then
-            return ru
-        end
+        if string.find(lower, key) then return ru end
     end
-    
     return rawRole
 end
 
---//==================================================
---// OLD TOGGLE FUNCTION
---//==================================================
-
 local function AddCorner(parent, radius)
-    return Create("UICorner", {
-        CornerRadius = UDim.new(0, radius)
-    }, parent)
+    return Create("UICorner", { CornerRadius = UDim.new(0, radius) }, parent)
 end
 
 local function CreateToggle(parent, text, yOffset, callback)
@@ -352,7 +300,6 @@ local function CreateToggle(parent, text, yOffset, callback)
 
     local function SetState(value)
         State = value
-
         if State then
             Tween(Toggle, { BackgroundColor3 = COLORS.ToggleOn })
             Tween(Circle, { Position = UDim2.new(1, -26, 0.5, 0), BackgroundColor3 = COLORS.White })
@@ -360,10 +307,7 @@ local function CreateToggle(parent, text, yOffset, callback)
             Tween(Toggle, { BackgroundColor3 = COLORS.ToggleOff })
             Tween(Circle, { Position = UDim2.new(0, 4, 0.5, 0), BackgroundColor3 = COLORS.SecondaryText })
         end
-
-        if callback then
-            callback(State)
-        end
+        if callback then callback(State) end
     end
 
     Toggle.Activated:Connect(function()
@@ -373,15 +317,10 @@ local function CreateToggle(parent, text, yOffset, callback)
     return Row
 end
 
---//==================================================
---// GUI RESET
---//==================================================
-
+--// RESET OLD GUI
 pcall(function()
     local old = CoreGui:FindFirstChild("CSS_JAVA_GUI")
-    if old then
-        old:Destroy()
-    end
+    if old then old:Destroy() end
 end)
 
 local ScreenGui = Create("ScreenGui", {
@@ -392,10 +331,7 @@ local ScreenGui = Create("ScreenGui", {
     DisplayOrder = 999
 }, CoreGui)
 
---//==================================================
---// FULL SCREEN BACKGROUND
---//==================================================
-
+--// BACKGROUND & GLOWS
 local BackgroundLayer = Create("Frame", {
     Size = UDim2.fromScale(1, 1),
     BackgroundTransparency = 1,
@@ -419,60 +355,7 @@ Create("Frame", {
     ZIndex = 1
 }, BackgroundLayer)
 
-local GlowA = Create("Frame", {
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Position = UDim2.fromScale(0.18, 0.22),
-    Size = UDim2.fromOffset(280, 280),
-    BackgroundColor3 = COLORS.Accent,
-    BackgroundTransparency = 0.88,
-    BorderSizePixel = 0,
-    ZIndex = 1
-}, BackgroundLayer)
-Corner(GlowA, 140)
-
-local GlowB = Create("Frame", {
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Position = UDim2.fromScale(0.84, 0.78),
-    Size = UDim2.fromOffset(240, 240),
-    BackgroundColor3 = COLORS.Accent2,
-    BackgroundTransparency = 0.9,
-    BorderSizePixel = 0,
-    ZIndex = 1
-}, BackgroundLayer)
-Corner(GlowB, 120)
-
-task.spawn(function()
-    while GlowA.Parent do
-        Tween(GlowA, {
-            Position = UDim2.fromScale(0.22, 0.28),
-            BackgroundTransparency = 0.84
-        }, 2.4)
-
-        Tween(GlowB, {
-            Position = UDim2.fromScale(0.78, 0.72),
-            BackgroundTransparency = 0.86
-        }, 2.4)
-
-        task.wait(2.5)
-
-        Tween(GlowA, {
-            Position = UDim2.fromScale(0.16, 0.20),
-            BackgroundTransparency = 0.9
-        }, 2.4)
-
-        Tween(GlowB, {
-            Position = UDim2.fromScale(0.86, 0.80),
-            BackgroundTransparency = 0.92
-        }, 2.4)
-
-        task.wait(2.5)
-    end
-end)
-
---//==================================================
 --// MINI HUD
---//==================================================
-
 local MiniHud = Create("Frame", {
     Name = "MiniHud",
     AnchorPoint = Vector2.new(1, 1),
@@ -512,13 +395,8 @@ local MiniPing = Create("TextLabel", {
     ZIndex = 100
 }, MiniHud)
 
---//==================================================
 --// MAIN WINDOW
---//==================================================
-
-local UIScale = Create("UIScale", {
-    Scale = 1
-})
+local UIScale = Create("UIScale", { Scale = 1 })
 
 local MainFrame = Create("Frame", {
     Name = "MainWindow",
@@ -533,28 +411,17 @@ local MainFrame = Create("Frame", {
 }, ScreenGui)
 
 UIScale.Parent = MainFrame
-
 Corner(MainFrame, 24)
 Stroke(MainFrame, COLORS.Accent, 0.72, 1)
 
-Create("Frame", {
-    Size = UDim2.new(0, 3, 1, 0),
-    BackgroundColor3 = COLORS.Accent,
-    BorderSizePixel = 0,
-    ZIndex = 30
-}, MainFrame)
-
---//==================================================
 --// SIDEBAR
---//==================================================
-
 local Sidebar = Create("Frame", {
     Size = UDim2.new(0, CONFIG.SidebarWidth, 1, 0),
     BackgroundColor3 = COLORS.Side,
     BackgroundTransparency = 0.08,
     BorderSizePixel = 0,
     ZIndex = 5
-}, Sidebar)
+}, MainFrame)
 
 local Brand = Create("Frame", {
     Position = UDim2.fromOffset(20, 24),
@@ -568,23 +435,10 @@ local LogoMark = Create("ImageLabel", {
     Position = UDim2.fromOffset(0, 6),
     BackgroundColor3 = COLORS.Accent,
     BorderSizePixel = 0,
-    Image = "",
     ScaleType = Enum.ScaleType.Crop,
     ZIndex = 7
 }, Brand)
-
 Corner(LogoMark, 13)
-
-Create("TextLabel", {
-    Name = "LogoFallback",
-    Size = UDim2.fromScale(1, 1),
-    BackgroundTransparency = 1,
-    Text = "",
-    TextColor3 = COLORS.Text,
-    TextSize = 16,
-    Font = FONT,
-    ZIndex = 8
-}, LogoMark)
 
 Create("TextLabel", {
     Position = UDim2.fromOffset(54, 8),
@@ -659,10 +513,6 @@ local CurrentSubtitle = Create("TextLabel", {
     ZIndex = 9
 }, TopBar)
 
---//==================================================
---// HEADER BUTTONS
---//==================================================
-
 local function HeaderBtn(name, kind, x)
     local b = Create("TextButton", {
         Name = name,
@@ -675,7 +525,6 @@ local function HeaderBtn(name, kind, x)
         AutoButtonColor = false,
         ZIndex = 10
     }, TopBar)
-
     Corner(b, 12)
     Stroke(b, COLORS.Line, 0.9, 1)
 
@@ -686,29 +535,18 @@ local function HeaderBtn(name, kind, x)
         Tween(b, { BackgroundColor3 = COLORS.CardInner })
         RecolorIcon(icon, COLORS.Text)
     end)
-
     b.MouseLeave:Connect(function()
         Tween(b, { BackgroundColor3 = COLORS.Card })
         RecolorIcon(icon, COLORS.Dim)
     end)
-
     return b
 end
 
 local CloseButton = HeaderBtn("Close", "close", 0)
 local DragButton = HeaderBtn("Drag", "drag", -46)
 
---//==================================================
---// PAGES
---//==================================================
-
-local PagesFolder = Create("Folder", {
-    Name = "Pages"
-}, Content)
-
---//==================================================
---// HOME
---//==================================================
+--// PAGES CONTAINER
+local PagesFolder = Create("Folder", { Name = "Pages" }, Content)
 
 local function Card(parent, name, pos, size)
     local c = Create("Frame", {
@@ -720,17 +558,8 @@ local function Card(parent, name, pos, size)
         ClipsDescendants = true,
         ZIndex = 8
     }, parent)
-
     Corner(c, 18)
     Stroke(c, COLORS.Line, 0.9, 1)
-
-    Create("Frame", {
-        Size = UDim2.new(0, 3, 1, 0),
-        BackgroundColor3 = COLORS.Accent,
-        BorderSizePixel = 0,
-        ZIndex = 9
-    }, c)
-
     return c
 end
 
@@ -771,7 +600,6 @@ local function StatLine(parent, y, labelText)
         BorderSizePixel = 0,
         ZIndex = 10
     }, parent)
-
     Corner(row, 12)
 
     Create("TextLabel", {
@@ -802,168 +630,51 @@ local function StatLine(parent, y, labelText)
     return value
 end
 
-local HomePage = Create("Frame", {
-    Size = UDim2.fromScale(1, 1),
-    BackgroundTransparency = 1,
-    Visible = true,
-    ZIndex = 4
-}, PagesFolder)
-
-local ProfileCard = Card(
-    HomePage,
-    "ProfileCard",
-    UDim2.fromOffset(28, 92),
-    UDim2.new(1, -56, 0, 148)
-)
-
+--// 1) HOME PAGE
+local HomePage = Create("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = true }, PagesFolder)
+local ProfileCard = Card(HomePage, "ProfileCard", UDim2.fromOffset(28, 92), UDim2.new(1, -56, 0, 148))
 local Avatar = Create("ImageLabel", {
-    Position = UDim2.fromOffset(18, 18),
-    Size = UDim2.fromOffset(112, 112),
-    BackgroundColor3 = COLORS.CardInner,
-    BorderSizePixel = 0,
-    Image = "",
-    ScaleType = Enum.ScaleType.Crop,
-    ZIndex = 10
+    Position = UDim2.fromOffset(18, 18), Size = UDim2.fromOffset(112, 112),
+    BackgroundColor3 = COLORS.CardInner, BorderSizePixel = 0, ScaleType = Enum.ScaleType.Crop, ZIndex = 10
 }, ProfileCard)
-
 Corner(Avatar, 22)
 Stroke(Avatar, COLORS.Accent, 0.25, 2)
 
-Create("TextLabel", {
-    Position = UDim2.fromOffset(148, 28),
-    Size = UDim2.new(1, -168, 0, 18),
-    BackgroundTransparency = 1,
-    Text = "HOME",
-    TextColor3 = COLORS.Accent2,
-    TextSize = 12,
-    Font = FONT,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 10
-}, ProfileCard)
+Create("TextLabel", { Position = UDim2.fromOffset(148, 28), Size = UDim2.new(1, -168, 0, 18), BackgroundTransparency = 1, Text = "HOME", TextColor3 = COLORS.Accent2, TextSize = 12, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 10 }, ProfileCard)
+Create("TextLabel", { Position = UDim2.fromOffset(148, 50), Size = UDim2.new(1, -168, 0, 32), BackgroundTransparency = 1, Text = Player and Player.Name or "Player", TextColor3 = COLORS.Text, TextSize = 22, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 10 }, ProfileCard)
+Create("TextLabel", { Position = UDim2.fromOffset(148, 86), Size = UDim2.new(1, -168, 0, 20), BackgroundTransparency = 1, Text = "ID " .. tostring(Player and Player.UserId or 0), TextColor3 = COLORS.Dim, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 10 }, ProfileCard)
 
-local HomeName = Create("TextLabel", {
-    Position = UDim2.fromOffset(148, 50),
-    Size = UDim2.new(1, -168, 0, 32),
-    BackgroundTransparency = 1,
-    Text = Player and Player.Name or "Player",
-    TextColor3 = COLORS.Text,
-    TextSize = 22,
-    Font = FONT,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    TextTruncate = Enum.TextTruncate.AtEnd,
-    ZIndex = 10
-}, ProfileCard)
-
-local HomeId = Create("TextLabel", {
-    Position = UDim2.fromOffset(148, 86),
-    Size = UDim2.new(1, -168, 0, 20),
-    BackgroundTransparency = 1,
-    Text = "ID " .. tostring(Player and Player.UserId or 0),
-    TextColor3 = COLORS.Dim,
-    TextSize = 13,
-    Font = FONT,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 10
-}, ProfileCard)
-
-local StatsCard = Card(
-    HomePage,
-    "StatsCard",
-    UDim2.fromOffset(28, 256),
-    UDim2.new(1, -56, 0, 228)
-)
-
+local StatsCard = Card(HomePage, "StatsCard", UDim2.fromOffset(28, 256), UDim2.new(1, -56, 0, 228))
 Badge(StatsCard, "LIVE")
 Heading(StatsCard, "Session")
-
 local GameValue = StatLine(StatsCard, 72, "Game")
 local FpsValue = StatLine(StatsCard, 122, "FPS")
 local PingValue = StatLine(StatsCard, 172, "Ping")
 
---//==================================================
---// AIM
---//==================================================
-
-local AimPage = Create("Frame", {
-    Size = UDim2.fromScale(1, 1),
-    BackgroundTransparency = 1,
-    Visible = false,
-    ZIndex = 4
-}, PagesFolder)
-
-local AimCard = Card(
-    AimPage,
-    "AimCard",
-    UDim2.fromOffset(28, 92),
-    UDim2.new(1, -56, 0, 392)
-)
-
+--// 2) AIM PAGE
+local AimPage = Create("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, PagesFolder)
+local AimCard = Card(AimPage, "AimCard", UDim2.fromOffset(28, 92), UDim2.new(1, -56, 0, 392))
 Badge(AimCard, "AIM")
 Heading(AimCard, "Targeting")
 
-Create("TextLabel", {
-    Position = UDim2.fromOffset(24, 78),
-    Size = UDim2.new(1, -48, 0, 80),
-    BackgroundTransparency = 1,
-    Text = "This tab is empty for now.",
-    TextColor3 = COLORS.Dim,
-    TextSize = 16,
-    Font = FONT,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    TextYAlignment = Enum.TextYAlignment.Top,
-    ZIndex = 10
-}, AimCard)
-
---//==================================================
---// WH / VISUALS
---//==================================================
-
-local WhPage = Create("Frame", {
-    Size = UDim2.fromScale(1, 1),
-    BackgroundTransparency = 1,
-    Visible = false,
-    ZIndex = 4
-}, PagesFolder)
-
-local WhCard = Card(
-    WhPage,
-    "WhCard",
-    UDim2.fromOffset(28, 92),
-    UDim2.new(1, -56, 0, 130)
-)
-
+--// 3) VISUALS PAGE (WH)
+local WhPage = Create("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, PagesFolder)
+local WhCard = Card(WhPage, "WhCard", UDim2.fromOffset(28, 92), UDim2.new(1, -56, 0, 130))
 Badge(WhCard, "VISUALS")
 Heading(WhCard, "Display")
 
-local ESP_SETTINGS = {
-    Enabled = false,
-    Roles = true,
-    Health = true,
-    Armor = true,
-    Distance = true
-}
+local ESP_SETTINGS = { Enabled = false, Roles = true, Health = true, Armor = true, Distance = true }
 
-CreateToggle(WhCard, "Wh", 60, function(state)
-    ESP_SETTINGS.Enabled = state
-end)
+CreateToggle(WhCard, "Wh", 60, function(state) ESP_SETTINGS.Enabled = state end)
 
 local DropdownButton = Create("TextButton", {
-    Name = "DropdownButton",
-    Position = UDim2.fromOffset(20, 108),
-    Size = UDim2.new(1, -40, 0, 18),
-    BackgroundTransparency = 1,
-    Text = "▼",
-    TextColor3 = COLORS.SecondaryText,
-    TextSize = 12,
-    Font = Enum.Font.GothamBold,
-    ZIndex = 11
+    Position = UDim2.fromOffset(20, 104), Size = UDim2.new(1, -40, 0, 20),
+    BackgroundTransparency = 1, Text = "▼", TextColor3 = COLORS.SecondaryText, TextSize = 12, Font = Enum.Font.GothamBold, ZIndex = 11
 }, WhCard)
 
 local isDropdownOpen = false
-
 DropdownButton.Activated:Connect(function()
     isDropdownOpen = not isDropdownOpen
-
     if isDropdownOpen then
         DropdownButton.Text = "▲"
         Tween(WhCard, { Size = UDim2.new(1, -56, 0, 350) })
@@ -973,39 +684,17 @@ DropdownButton.Activated:Connect(function()
     end
 end)
 
-local SubContainer = Create("Frame", {
-    Name = "SubContainer",
-    Position = UDim2.fromOffset(20, 130),
-    Size = UDim2.new(1, -40, 0, 210),
-    BackgroundTransparency = 1,
-    ZIndex = 10
-}, WhCard)
+local SubContainer = Create("Frame", { Position = UDim2.fromOffset(0, 125), Size = UDim2.new(1, 0, 0, 210), BackgroundTransparency = 1, ZIndex = 10 }, WhCard)
+CreateToggle(SubContainer, "Roles", 0, function(state) ESP_SETTINGS.Roles = state end)
+CreateToggle(SubContainer, "Health Bar", 50, function(state) ESP_SETTINGS.Health = state end)
+CreateToggle(SubContainer, "Armor Bar", 100, function(state) ESP_SETTINGS.Armor = state end)
+CreateToggle(SubContainer, "Distance", 150, function(state) ESP_SETTINGS.Distance = state end)
 
-CreateToggle(SubContainer, "Roles", 0, function(state)
-    ESP_SETTINGS.Roles = state
-end)
-
-CreateToggle(SubContainer, "Health Bar", 50, function(state)
-    ESP_SETTINGS.Health = state
-end)
-
-CreateToggle(SubContainer, "Armor Bar", 100, function(state)
-    ESP_SETTINGS.Armor = state
-end)
-
-CreateToggle(SubContainer, "Distance", 150, function(state)
-    ESP_SETTINGS.Distance = state
-end)
-
---//==================================================
---// ESP ENGINE LOGIC
---//==================================================
-
+-- ESP LOGIC
 local function ClearEsp(targetPlayer)
     if targetPlayer and targetPlayer.Character then
         local oldGui = targetPlayer.Character:FindFirstChild("CSS_ESP_GUI")
         if oldGui then oldGui:Destroy() end
-
         local oldHl = targetPlayer.Character:FindFirstChild("CSS_ESP_HL")
         if oldHl then oldHl:Destroy() end
     end
@@ -1013,10 +702,8 @@ end
 
 local function CreateEspForPlayer(plr)
     if plr == Player then return end
-
     local function ApplyEsp(character)
         if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-
         ClearEsp(plr)
 
         local hl = Instance.new("Highlight")
@@ -1046,13 +733,11 @@ local function CreateEspForPlayer(plr)
         local nameLabel = Instance.new("TextLabel")
         nameLabel.Name = "NameLabel"
         nameLabel.Size = UDim2.new(1, 0, 0, 16)
-        nameLabel.Position = UDim2.fromOffset(0, 0)
         nameLabel.BackgroundTransparency = 1
         nameLabel.Text = plr.Name
         nameLabel.TextColor3 = COLORS.White
         nameLabel.TextSize = 13
         nameLabel.Font = Enum.Font.GothamBold
-        nameLabel.TextStrokeTransparency = 0.3
         nameLabel.Parent = container
 
         local roleLabel = Instance.new("TextLabel")
@@ -1064,7 +749,6 @@ local function CreateEspForPlayer(plr)
         roleLabel.TextColor3 = COLORS.Accent
         roleLabel.TextSize = 11
         roleLabel.Font = Enum.Font.GothamMedium
-        roleLabel.TextStrokeTransparency = 0.4
         roleLabel.Parent = container
 
         local statsLabel = Instance.new("TextLabel")
@@ -1076,7 +760,6 @@ local function CreateEspForPlayer(plr)
         statsLabel.TextColor3 = COLORS.Health
         statsLabel.TextSize = 10
         statsLabel.Font = Enum.Font.GothamBold
-        statsLabel.TextStrokeTransparency = 0.5
         statsLabel.Parent = container
 
         local distLabel = Instance.new("TextLabel")
@@ -1088,16 +771,12 @@ local function CreateEspForPlayer(plr)
         distLabel.TextColor3 = COLORS.SecondaryText
         distLabel.TextSize = 10
         distLabel.Font = Enum.Font.Gotham
-        distLabel.TextStrokeTransparency = 0.5
         distLabel.Parent = container
 
         bb.Parent = character
     end
 
-    if plr.Character then
-        ApplyEsp(plr.Character)
-    end
-
+    if plr.Character then ApplyEsp(plr.Character) end
     plr.CharacterAdded:Connect(ApplyEsp)
 end
 
@@ -1107,7 +786,6 @@ RunService.RenderStepped:Connect(function()
             if plr.Character then
                 local gui = plr.Character:FindFirstChild("CSS_ESP_GUI")
                 local hl = plr.Character:FindFirstChild("CSS_ESP_HL")
-
                 if gui then gui.Enabled = false end
                 if hl then hl.Enabled = false end
             end
@@ -1115,14 +793,11 @@ RunService.RenderStepped:Connect(function()
         return
     end
 
-    local myChar = Player.Character
-    local myHrp = myChar and myChar:FindFirstChild("HumanoidRootPart")
-
+    local myHrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= Player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
             local char = plr.Character
             local hrp = char.HumanoidRootPart
-
             local gui = char:FindFirstChild("CSS_ESP_GUI")
             local hl = char:FindFirstChild("CSS_ESP_HL")
 
@@ -1134,11 +809,9 @@ RunService.RenderStepped:Connect(function()
 
             if myHrp and gui and hl then
                 local distance = (myHrp.Position - hrp.Position).Magnitude
-
                 if distance <= CONFIG.MaxEspDistance then
                     gui.Enabled = true
                     hl.Enabled = true
-
                     local container = gui:FindFirstChild("Container")
                     if container then
                         local roleLbl = container:FindFirstChild("RoleLabel")
@@ -1153,15 +826,9 @@ RunService.RenderStepped:Connect(function()
                         if statsLbl then
                             local humanoid = char:FindFirstChildOfClass("Humanoid")
                             local hp = humanoid and math.floor(humanoid.Health) or 0
-
                             local armor = 0
                             local ls = plr:FindFirstChild("leaderstats")
-
-                            if ls and ls:FindFirstChild("Armor") then
-                                armor = math.floor(ls.Armor.Value)
-                            elseif char:FindFirstChild("Armor") then
-                                armor = math.floor(char.Armor.Value)
-                            end
+                            if ls and ls:FindFirstChild("Armor") then armor = math.floor(ls.Armor.Value) end
 
                             local textParts = {}
                             if ESP_SETTINGS.Health then table.insert(textParts, "HP: " .. hp) end
@@ -1185,131 +852,51 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
---//==================================================
---// MOVEMENT
---//==================================================
-
-local MovementPage = Create("Frame", {
-    Size = UDim2.fromScale(1, 1),
-    BackgroundTransparency = 1,
-    Visible = false,
-    ZIndex = 4
-}, PagesFolder)
-
-local MovementCard = Card(
-    MovementPage,
-    "MoveCard",
-    UDim2.fromOffset(28, 92),
-    UDim2.new(1, -56, 0, 180)
-)
-
+--// 4) MOVEMENT PAGE
+local MovementPage = Create("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, PagesFolder)
+local MovementCard = Card(MovementPage, "MoveCard", UDim2.fromOffset(28, 92), UDim2.new(1, -56, 0, 235))
 Badge(MovementCard, "MOVEMENT")
 Heading(MovementCard, "Motion")
 
---// 1) SPEED-HACK (WALKSPEED)
-
+-- SPEED-HACK (WALKSPEED)
 local speedHackEnabled = false
-
 RunService.RenderStepped:Connect(function()
     if speedHackEnabled then
-        local character = Player.Character
-        if character then
-            local humanoid = character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.WalkSpeed = 33
-            end
-        end
+        local humanoid = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then humanoid.WalkSpeed = 33 end
     end
 end)
 
 CreateToggle(MovementCard, "speed-hack", 68, function(state)
     speedHackEnabled = state
     if not state then
-        local character = Player.Character
-        if character then
-            local humanoid = character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid.WalkSpeed = 16
-            end
-        end
+        local humanoid = Player.Character and Player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then humanoid.WalkSpeed = 16 end
     end
 end)
 
---// 2) SPEED CAR LOGIC WITH MULTIPLIER REGULATION
-
+-- SPEED CAR + REGULATION
 local carSpeedMultiplier = 2
 local speedCarEnabled = false
 local boostedSeats = {}
-local Connections = {}
 
 local function updateSeatSpeed(seat)
     if not seat:IsA("VehicleSeat") then return end
-
-    if not boostedSeats[seat] then
-        boostedSeats[seat] = seat.MaxSpeed
-    end
-
-    if speedCarEnabled then
-        pcall(function()
-            seat.MaxSpeed = boostedSeats[seat] * carSpeedMultiplier
-        end)
-    else
-        pcall(function()
-            seat.MaxSpeed = boostedSeats[seat]
-        end)
-    end
+    if not boostedSeats[seat] then boostedSeats[seat] = seat.MaxSpeed end
+    pcall(function()
+        seat.MaxSpeed = speedCarEnabled and (boostedSeats[seat] * carSpeedMultiplier) or boostedSeats[seat]
+    end)
 end
 
 local function applySpeedCarToAll()
     for _, object in ipairs(workspace:GetDescendants()) do
-        if object:IsA("VehicleSeat") then
-            updateSeatSpeed(object)
-        end
+        if object:IsA("VehicleSeat") then updateSeatSpeed(object) end
     end
 end
-
-local function enableSpeedCar()
-    speedCarEnabled = true
-    applySpeedCarToAll()
-
-    Connections.DescendantAdded = workspace.DescendantAdded:Connect(function(object)
-        if object:IsA("VehicleSeat") then
-            updateSeatSpeed(object)
-        end
-    end)
-end
-
-local function disableSpeedCar()
-    speedCarEnabled = false
-    
-    for connName, conn in pairs(Connections) do
-        if conn then
-            conn:Disconnect()
-            Connections[connName] = nil
-        end
-    end
-
-    for seat, originalSpeed in pairs(boostedSeats) do
-        if seat and seat.Parent then
-            pcall(function()
-                seat.MaxSpeed = originalSpeed
-            end)
-        end
-    end
-    
-    table.clear(boostedSeats)
-end
-
--- SPEED CAR TOGGLE & CONTROLS UI
 
 CreateToggle(MovementCard, "speed car", 120, function(state)
-    if state then
-        enableSpeedCar()
-        Tween(MovementCard, { Size = UDim2.new(1, -56, 0, 235) })
-    else
-        disableSpeedCar()
-        Tween(MovementCard, { Size = UDim2.new(1, -56, 0, 180) })
-    end
+    speedCarEnabled = state
+    applySpeedCarToAll()
 end)
 
 local CarSpeedControlRow = Create("Frame", {
@@ -1321,50 +908,25 @@ local CarSpeedControlRow = Create("Frame", {
 }, MovementCard)
 
 Create("TextLabel", {
-    Position = UDim2.fromOffset(0, 0),
-    Size = UDim2.new(1, -140, 1, 0),
-    BackgroundTransparency = 1,
-    Text = "Car Multiplier",
-    TextColor3 = COLORS.Dim,
-    TextSize = 12,
-    Font = Enum.Font.GothamMedium,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 11
+    Position = UDim2.fromOffset(0, 0), Size = UDim2.new(1, -140, 1, 0),
+    BackgroundTransparency = 1, Text = "Car Multiplier", TextColor3 = COLORS.Dim, TextSize = 12, Font = Enum.Font.GothamMedium, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 11
 }, CarSpeedControlRow)
 
 local MultiplierDisplay = Create("TextLabel", {
-    Position = UDim2.new(1, -135, 0, 7),
-    Size = UDim2.fromOffset(45, 30),
-    BackgroundColor3 = COLORS.CardInner,
-    Text = "x" .. tostring(carSpeedMultiplier),
-    TextColor3 = COLORS.Text,
-    TextSize = 13,
-    Font = Enum.Font.GothamBold,
-    ZIndex = 11
+    Position = UDim2.new(1, -135, 0, 7), Size = UDim2.fromOffset(45, 30),
+    BackgroundColor3 = COLORS.CardInner, Text = "x" .. tostring(carSpeedMultiplier), TextColor3 = COLORS.Text, TextSize = 13, Font = Enum.Font.GothamBold, ZIndex = 11
 }, CarSpeedControlRow)
 Corner(MultiplierDisplay, 8)
 
 local BtnMinus = Create("TextButton", {
-    Position = UDim2.new(1, -85, 0, 7),
-    Size = UDim2.fromOffset(38, 30),
-    BackgroundColor3 = COLORS.CardInner,
-    Text = "-",
-    TextColor3 = COLORS.Minus,
-    TextSize = 16,
-    Font = Enum.Font.GothamBold,
-    ZIndex = 11
+    Position = UDim2.new(1, -85, 0, 7), Size = UDim2.fromOffset(38, 30),
+    BackgroundColor3 = COLORS.CardInner, Text = "-", TextColor3 = COLORS.Minus, TextSize = 16, Font = Enum.Font.GothamBold, ZIndex = 11
 }, CarSpeedControlRow)
 Corner(BtnMinus, 8)
 
 local BtnPlus = Create("TextButton", {
-    Position = UDim2.new(1, -42, 0, 7),
-    Size = UDim2.fromOffset(38, 30),
-    BackgroundColor3 = COLORS.CardInner,
-    Text = "+",
-    TextColor3 = COLORS.Plus,
-    TextSize = 16,
-    Font = Enum.Font.GothamBold,
-    ZIndex = 11
+    Position = UDim2.new(1, -42, 0, 7), Size = UDim2.fromOffset(38, 30),
+    BackgroundColor3 = COLORS.CardInner, Text = "+", TextColor3 = COLORS.Plus, TextSize = 16, Font = Enum.Font.GothamBold, ZIndex = 11
 }, CarSpeedControlRow)
 Corner(BtnPlus, 8)
 
@@ -1372,9 +934,7 @@ BtnMinus.Activated:Connect(function()
     if carSpeedMultiplier > 1 then
         carSpeedMultiplier = carSpeedMultiplier - 1
         MultiplierDisplay.Text = "x" .. tostring(carSpeedMultiplier)
-        if speedCarEnabled then
-            applySpeedCarToAll()
-        end
+        if speedCarEnabled then applySpeedCarToAll() end
     end
 end)
 
@@ -1382,142 +942,35 @@ BtnPlus.Activated:Connect(function()
     if carSpeedMultiplier < 10 then
         carSpeedMultiplier = carSpeedMultiplier + 1
         MultiplierDisplay.Text = "x" .. tostring(carSpeedMultiplier)
-        if speedCarEnabled then
-            applySpeedCarToAll()
-        end
+        if speedCarEnabled then applySpeedCarToAll() end
     end
 end)
 
---//==================================================
---// OTHER + BALANCE
---//==================================================
-
-local OtherPage = Create("Frame", {
-    Size = UDim2.fromScale(1, 1),
-    BackgroundTransparency = 1,
-    Visible = false,
-    ZIndex = 4
-}, PagesFolder)
+--// 5) OTHER & BALANCE PAGE
+local OtherPage = Create("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, PagesFolder)
 
 local function BigStatCard(parent, pos, size, badge, title)
     local card = Card(parent, badge .. "Card", pos, size)
-
     Badge(card, badge)
     Heading(card, title)
 
     local session = Create("TextLabel", {
-        Position = UDim2.fromOffset(24, 72),
-        Size = UDim2.new(1, -48, 0, 64),
-        BackgroundTransparency = 1,
-        Text = "0",
-        TextColor3 = COLORS.Text,
-        TextSize = 36,
-        Font = FONT,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 10
-    }, card)
-
-    local hint = Create("TextLabel", {
-        Position = UDim2.fromOffset(24, 130),
-        Size = UDim2.new(1, -48, 0, 18),
-        BackgroundTransparency = 1,
-        Text = "SESSION",
-        TextColor3 = COLORS.Mute,
-        TextSize = 11,
-        Font = FONT,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 10
+        Position = UDim2.fromOffset(24, 72), Size = UDim2.new(1, -48, 0, 64),
+        BackgroundTransparency = 1, Text = "0", TextColor3 = COLORS.Text, TextSize = 36, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 10
     }, card)
 
     local startL = StatLine(card, 168, "Start")
     local nowL = StatLine(card, 222, "Now")
-
-    return startL, nowL, session, hint
+    return startL, nowL, session
 end
 
-local StartValue, NowValue, DiffValue = BigStatCard(
-    OtherPage,
-    UDim2.fromOffset(28, 92),
-    UDim2.new(0.5, -36, 0, 392),
-    "MONEY",
-    "Cash"
-)
+local StartValue, NowValue, DiffValue = BigStatCard(OtherPage, UDim2.fromOffset(28, 92), UDim2.new(0.5, -36, 0, 392), "MONEY", "Cash")
+local XpStartValue, XpNowValue, XpDiffValue = BigStatCard(OtherPage, UDim2.new(0.5, 8, 0, 92), UDim2.new(0.5, -36, 0, 392), "XP", "Experience")
 
-local XpStartValue, XpNowValue, XpDiffValue = BigStatCard(
-    OtherPage,
-    UDim2.new(0.5, 8, 0, 92),
-    UDim2.new(0.5, -36, 0, 392),
-    "XP",
-    "Experience"
-)
+--// 6) SETTINGS PAGE
+local SettingsPage = Create("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false }, PagesFolder)
 
---//==================================================
---// SETTINGS
---//==================================================
-
-local SettingsPage = Create("Frame", {
-    Size = UDim2.fromScale(1, 1),
-    BackgroundTransparency = 1,
-    Visible = false
-}, PagesFolder)
-
---//==================================================
---// PLAYER PANEL
---//==================================================
-
-local PlayerPanel = Create("Frame", {
-    AnchorPoint = Vector2.new(0, 1),
-    Position = UDim2.new(0, 16, 1, -16),
-    Size = UDim2.new(1, -32, 0, 62),
-    BackgroundColor3 = COLORS.Card,
-    BorderSizePixel = 0,
-    ZIndex = 8
-}, Sidebar)
-
-Corner(PlayerPanel, 16)
-Stroke(PlayerPanel, COLORS.Line, 0.9, 1)
-
-local MiniAva = Create("ImageLabel", {
-    Position = UDim2.fromOffset(10, 11),
-    Size = UDim2.fromOffset(40, 40),
-    BackgroundColor3 = COLORS.Accent,
-    BorderSizePixel = 0,
-    Image = "",
-    ScaleType = Enum.ScaleType.Crop,
-    ZIndex = 9
-}, PlayerPanel)
-
-Corner(MiniAva, 20)
-
-Create("TextLabel", {
-    Position = UDim2.fromOffset(58, 12),
-    Size = UDim2.new(1, -68, 0, 20),
-    BackgroundTransparency = 1,
-    Text = Player and Player.Name or "Player",
-    TextColor3 = COLORS.Text,
-    TextSize = 13,
-    Font = FONT,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    TextTruncate = Enum.TextTruncate.AtEnd,
-    ZIndex = 9
-}, PlayerPanel)
-
-Create("TextLabel", {
-    Position = UDim2.fromOffset(58, 32),
-    Size = UDim2.new(1, -68, 0, 16),
-    BackgroundTransparency = 1,
-    Text = "ONLINE",
-    TextColor3 = COLORS.Accent2,
-    TextSize = 11,
-    Font = FONT,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 9
-}, PlayerPanel)
-
---//==================================================
---// MENU DATA
---//==================================================
-
+--// MENU TAB SWITCHING
 local MenuItems = {
     { Name = "Home", Sub = "SESSION", Kind = "home", Page = HomePage },
     { Name = "Aim", Sub = "TARGETING", Kind = "aim", Page = AimPage },
@@ -1531,445 +984,47 @@ local MenuButtons = {}
 
 local function SelectTab(index)
     local selected = MenuItems[index]
-
     CurrentTitle.Text = selected.Name
     CurrentSubtitle.Text = selected.Sub
 
-    HomePage.Visible = selected.Page == HomePage
-    AimPage.Visible = selected.Page == AimPage
-    WhPage.Visible = selected.Page == WhPage
-    MovementPage.Visible = selected.Page == MovementPage
-    OtherPage.Visible = selected.Page == OtherPage
-    SettingsPage.Visible = selected.Page == SettingsPage
+    for _, item in ipairs(MenuItems) do
+        item.Page.Visible = (item == selected)
+    end
 
     for i, data in ipairs(MenuButtons) do
-        local on = i == index
-
-        Tween(data.Button, {
-            BackgroundColor3 = on and COLORS.Accent or COLORS.Card,
-            BackgroundTransparency = on and 0 or 1
-        })
-
-        Tween(data.Label, {
-            TextColor3 = on and COLORS.Text or COLORS.Dim
-        })
-
-        RecolorIcon(
-            data.Icon,
-            on and COLORS.Text or COLORS.Dim
-        )
+        local on = (i == index)
+        Tween(data.Button, { BackgroundColor3 = on and COLORS.Accent or COLORS.Card, BackgroundTransparency = on and 0 or 1 })
+        Tween(data.Label, { TextColor3 = on and COLORS.Text or COLORS.Dim })
+        RecolorIcon(data.Icon, on and COLORS.Text or COLORS.Dim)
     end
 end
 
 for index, data in ipairs(MenuItems) do
     local button = Create("TextButton", {
-        Size = UDim2.new(1, 0, 0, 44),
-        BackgroundColor3 = COLORS.Card,
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        Text = "",
-        AutoButtonColor = false,
-        LayoutOrder = index,
-        ZIndex = 8
+        Size = UDim2.new(1, 0, 0, 44), BackgroundColor3 = COLORS.Card, BackgroundTransparency = 1,
+        BorderSizePixel = 0, Text = "", AutoButtonColor = false, LayoutOrder = index, ZIndex = 8
     }, MenuContainer)
-
     Corner(button, 14)
 
-    local icon = PaintIcon(
-        button,
-        data.Kind,
-        COLORS.Dim
-    )
-
+    local icon = PaintIcon(button, data.Kind, COLORS.Dim)
     icon.Position = UDim2.fromOffset(14, 11)
 
     local label = Create("TextLabel", {
-        Position = UDim2.fromOffset(46, 0),
-        Size = UDim2.new(1, -54, 1, 0),
-        BackgroundTransparency = 1,
-        Text = data.Name,
-        TextColor3 = COLORS.Dim,
-        TextSize = 13,
-        Font = FONT,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 9
+        Position = UDim2.fromOffset(46, 0), Size = UDim2.new(1, -54, 1, 0),
+        BackgroundTransparency = 1, Text = data.Name, TextColor3 = COLORS.Dim, TextSize = 13, Font = FONT, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 9
     }, button)
 
-    button.MouseEnter:Connect(function()
-        if not data.Page.Visible then
-            Tween(button, { BackgroundTransparency = 0.65 })
-        end
-    end)
-
-    button.MouseLeave:Connect(function()
-        if not data.Page.Visible then
-            Tween(button, { BackgroundTransparency = 1 })
-        end
-    end)
-
-    button.Activated:Connect(function()
-        SelectTab(index)
-    end)
-
-    table.insert(MenuButtons, {
-        Button = button,
-        Icon = icon,
-        Label = label
-    })
+    button.Activated:Connect(function() SelectTab(index) end)
+    table.insert(MenuButtons, { Button = button, Icon = icon, Label = label })
 end
 
 SelectTab(1)
 
---//==================================================
---// AVATAR
---//==================================================
-
-task.spawn(function()
-    local ok, url = pcall(function()
-        return Players:GetUserThumbnailAsync(
-            Player.UserId,
-            Enum.ThumbnailType.HeadShot,
-            Enum.ThumbnailSize.Size150x150
-        )
-    end)
-
-    if ok and url then
-        Avatar.Image = url
-        MiniAva.Image = url
-        LogoMark.Image = url
-        _G.CSS_JAVA_AVATAR = url
-    end
-end)
-
---//==================================================
---// GAME NAME
---//==================================================
-
-task.spawn(function()
-    local _ = tostring(game.PlaceId)
-
-    local ok, info = pcall(function()
-        return MarketplaceService:GetProductInfo(game.PlaceId)
-    end)
-
-    if ok and info and info.Name then
-        GameValue.Text = info.Name
-    else
-        GameValue.Text = game.Name
-    end
-end)
-
---//==================================================
---// FPS / PING
---//==================================================
-
-local fpsAcc, fpsFrames = 0, 0
-
-RunService.RenderStepped:Connect(function(dt)
-    fpsAcc += dt
-    fpsFrames += 1
-
-    if fpsAcc >= 0.25 then
-        local fps = math.floor(fpsFrames / fpsAcc + 0.5)
-
-        FpsValue.Text = tostring(fps)
-        MiniFps.Text = "FPS " .. tostring(fps)
-
-        fpsAcc = 0
-        fpsFrames = 0
-    end
-
-    local ping = 0
-
-    local okPing, result = pcall(function()
-        return math.floor(Player:GetNetworkPing() * 1000 + 0.5)
-    end)
-
-    if okPing and typeof(result) == "number" then
-        ping = result
-    else
-        pcall(function()
-            local item = Stats.Network.ServerStatsItem["Data Ping"]
-
-            if item then
-                ping = math.floor(item:GetValue() + 0.5)
-            end
-        end)
-    end
-
-    PingValue.Text = ping .. " ms"
-    MiniPing.Text = "PING " .. ping
-end)
-
---//==================================================
---// MONEY SESSION TRACKER
---//==================================================
-
-local MONEY_NAMES = {
-    "Cash",
-    "Money",
-    "Dollars",
-    "Dollar",
-    "Balance",
-    "Bank",
-    "Wallet",
-    "Coins",
-    "Gold",
-    "Dough",
-    "Currency",
-    "MoneyValue"
-}
-
-local function isMoneyName(name)
-    local lower = string.lower(name)
-
-    for _, key in ipairs(MONEY_NAMES) do
-        if lower == string.lower(key)
-            or string.find(lower, string.lower(key), 1, true) then
-
-            return true
-        end
-    end
-
-    return false
-end
-
-local function readNumber(obj)
-    if not obj then return nil end
-
-    if obj:IsA("IntValue")
-        or obj:IsA("NumberValue")
-        or obj:IsA("DoubleConstrainedValue")
-        or obj:IsA("IntConstrainedValue") then
-
-        return tonumber(obj.Value)
-    end
-
-    if obj:IsA("StringValue") then
-        local n = tonumber(
-            (tostring(obj.Value):gsub("[^0-9%-%.]", ""))
-        )
-
-        return n
-    end
-
-    return nil
-end
-
-local function parseCompact(text)
-    if type(text) ~= "string" then return nil end
-
-    local raw = text:gsub("%s+", ""):gsub("%$", "")
-    local lower = raw:lower()
-    local mult = 1
-
-    if lower:find("b") then
-        mult = 1000000000
-    elseif lower:find("m") then
-        mult = 1000000
-    elseif lower:find("k") then
-        mult = 1000
-    end
-
-    local num = raw:match("(%d+[%.,]?%d*)")
-    if not num then return nil end
-
-    if mult > 1 then
-        num = num:gsub(",", ".")
-    else
-        num = num:gsub(",", "")
-    end
-
-    local n = tonumber(num)
-    if not n then return nil end
-
-    return n * mult
-end
-
-local function looksLikeXP(text, name)
-    local blob = string.lower((text or "") .. " " .. (name or ""))
-    return blob:find("опыт") or blob:find("xp") or blob:find("exp") or blob:find("/")
-end
-
-local function parseXP(text)
-    if type(text) ~= "string" then return nil end
-
-    local a, b = text:match("([%d%s,%.]+)%s*/%s*([%d%s,%.]+)")
-
-    if a then
-        a = a:gsub("%s", ""):gsub(",", "")
-        return tonumber(a)
-    end
-
-    if looksLikeXP(text, "") then
-        return parseCompact(text)
-    end
-
-    return nil
-end
-
-local function findMoneyAndXP()
-    local money, moneySrc = nil, nil
-    local xp, xpSrc = nil, nil
-
-    local function takeMoney(n, label)
-        if type(n) ~= "number" then return end
-        if money == nil or n > money then
-            money = n
-            moneySrc = label
-        end
-    end
-
-    local function takeXP(n, label)
-        if type(n) ~= "number" then return end
-        if xp == nil or n > xp then
-            xp = n
-            xpSrc = label
-        end
-    end
-
-    local pg = Player:FindFirstChild("PlayerGui")
-
-    if pg then
-        for _, obj in ipairs(pg:GetDescendants()) do
-            if obj:IsA("TextLabel") or obj:IsA("TextButton") then
-                local t = obj.Text or ""
-                local n = obj.Name or ""
-
-                if t:find("%$") and not looksLikeXP(t, n) then
-                    local v = parseCompact(t)
-                    if v and v > 0 then takeMoney(v, "hud." .. n) end
-                elseif looksLikeXP(t, n) then
-                    local v = parseXP(t)
-                    if v and v > 0 then takeXP(v, "hud." .. n) end
-                end
-            end
-        end
-    end
-
-    local function scan(root, prefix)
-        if not root then return end
-        for _, obj in ipairs(root:GetDescendants()) do
-            if isMoneyName(obj.Name) then
-                local v = readNumber(obj)
-                if v then takeMoney(v, prefix .. obj.Name) end
-            end
-
-            local lname = string.lower(obj.Name)
-            if lname:find("xp") or lname:find("exp") or lname:find("опыт") then
-                local v = readNumber(obj)
-                if v then takeXP(v, prefix .. obj.Name) end
-            end
-        end
-    end
-
-    scan(Player:FindFirstChild("leaderstats"), "leaderstats.")
-    scan(Player, "player.")
-
-    return money, moneySrc, xp, xpSrc
-end
-
-local startMoney = nil
-local startXP = nil
-
-local function formatMoney(n)
-    n = math.floor(n + 0.5)
-
-    local sign = n < 0 and "-" or ""
-    local s = tostring(math.abs(n))
-    local out = s
-
-    while true do
-        local nexts, count = string.gsub(out, "^(-?%d+)(%d%d%d)", "%1 %2")
-        out = nexts
-        if count == 0 then break end
-    end
-
-    return sign .. out
-end
-
-local function paintDiff(label, diff, suffix)
-    if diff > 0 then
-        label.Text = "+" .. formatMoney(diff) .. suffix
-        label.TextColor3 = COLORS.Plus
-    elseif diff < 0 then
-        label.Text = "-" .. formatMoney(math.abs(diff)) .. suffix
-        label.TextColor3 = COLORS.Minus
-    else
-        label.Text = "0" .. suffix
-        label.TextColor3 = COLORS.Text
-    end
-end
-
-task.spawn(function()
-    while true do
-        local now, _, xpNow = findMoneyAndXP()
-
-        if now ~= nil then
-            if startMoney == nil then startMoney = now end
-
-            StartValue.Text = formatMoney(startMoney) .. "$"
-            NowValue.Text = formatMoney(now) .. "$"
-            paintDiff(DiffValue, now - startMoney, "$")
-        else
-            StartValue.Text = "—"
-            NowValue.Text = "—"
-            DiffValue.Text = "waiting"
-            DiffValue.TextColor3 = COLORS.Mute
-        end
-
-        if xpNow ~= nil then
-            if startXP == nil then startXP = xpNow end
-
-            XpStartValue.Text = formatMoney(startXP)
-            XpNowValue.Text = formatMoney(xpNow)
-            paintDiff(XpDiffValue, xpNow - startXP, " XP")
-        else
-            XpStartValue.Text = "—"
-            XpNowValue.Text = "—"
-            XpDiffValue.Text = "waiting"
-            XpDiffValue.TextColor3 = COLORS.Mute
-        end
-
-        task.wait(0.25)
-    end
-end)
-
---//==================================================
---// RESPONSIVE SCALING
---//==================================================
-
-local cam = workspace.CurrentCamera
-
-local function UpdateScale()
-    cam = workspace.CurrentCamera
-    if not cam then return end
-
-    local v = cam.ViewportSize
-    UIScale.Scale = math.clamp(
-        math.min((v.X - 20) / 1000, (v.Y - 20) / 620),
-        CONFIG.MinScale,
-        CONFIG.MaxScale
-    )
-end
-
-UpdateScale()
-
-if cam then
-    cam:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateScale)
-end
-
---//==================================================
---// DRAG
---//==================================================
-
+--// DRAG & CLOSE
 local dragging, dragStart, startPos = false, nil, nil
-
 local function bindDrag(obj)
     obj.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch then
-
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = MainFrame.Position
@@ -1981,138 +1036,20 @@ bindDrag(TopBar)
 bindDrag(DragButton)
 
 UserInputService.InputChanged:Connect(function(input)
-    if dragging
-        and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         local d = input.Position - dragStart
-        MainFrame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + d.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + d.Y
-        )
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
     end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
 end)
-
---//==================================================
---// REOPEN BUTTON
---//==================================================
-
-local closed = false
-
-local reopen = Create("ImageButton", {
-    AnchorPoint = Vector2.new(1, 1),
-    Position = UDim2.new(1, -18, 1, -18),
-    Size = UDim2.fromOffset(40, 40),
-    BackgroundColor3 = COLORS.Accent,
-    BorderSizePixel = 0,
-    Image = "",
-    ScaleType = Enum.ScaleType.Crop,
-    AutoButtonColor = false,
-    Visible = false,
-    ZIndex = 100
-}, ScreenGui)
-
-Corner(reopen, 18)
-Stroke(reopen, COLORS.Accent, 0.2, 2)
-
-task.spawn(function()
-    for _ = 1, 40 do
-        if _G.CSS_JAVA_AVATAR and _G.CSS_JAVA_AVATAR ~= "" then
-            reopen.Image = _G.CSS_JAVA_AVATAR
-            break
-        end
-        task.wait(0.1)
-    end
-end)
-
-local rDrag, rStart, rPos, rMoved = false, nil, nil, false
-
-reopen.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-
-        rDrag = true
-        rStart = input.Position
-        rPos = reopen.Position
-        rMoved = false
-        reopen.AnchorPoint = Vector2.new(0, 0)
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if rDrag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local d = input.Position - rStart
-        if d.Magnitude > 5 then rMoved = true end
-
-        reopen.Position = UDim2.new(
-            rPos.X.Scale,
-            rPos.X.Offset + d.X,
-            rPos.Y.Scale,
-            rPos.Y.Offset + d.Y
-        )
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-        rDrag = false
-    end
-end)
-
---//==================================================
---// CLOSE
---//==================================================
 
 CloseButton.Activated:Connect(function()
-    if closed then return end
-    closed = true
-
-    Tween(MainFrame, {
-        Size = UDim2.fromOffset(920, 570),
-        BackgroundTransparency = 0.4
-    }, 0.16)
-
-    Tween(BackgroundLayer, { BackgroundTransparency = 1 }, 0.16)
-    task.wait(0.14)
-
-    BackgroundLayer.Visible = false
     MainFrame.Visible = false
-    reopen.Visible = true
+    BackgroundLayer.Visible = false
     MiniHud.Visible = true
-
-    reopen.Size = UDim2.fromOffset(32, 32)
-    Tween(reopen, { Size = UDim2.fromOffset(40, 40) }, 0.18)
 end)
 
-reopen.Activated:Connect(function()
-    if rMoved then
-        rMoved = false
-        return
-    end
-
-    closed = false
-    MiniHud.Visible = false
-    reopen.Visible = false
-    BackgroundLayer.Visible = true
-    MainFrame.Visible = true
-    MainFrame.BackgroundTransparency = 0.2
-    MainFrame.Size = UDim2.fromOffset(920, 570)
-
-    Tween(MainFrame, {
-        Size = UDim2.fromOffset(1000, 620),
-        BackgroundTransparency = 0.04
-    }, 0.2)
-
-    task.defer(UpdateScale)
-end)
-
-print("[CSS JAVA] Speed car controls updated successfully!")
+print("[CSS JAVA] All features successfully active and visible!")
