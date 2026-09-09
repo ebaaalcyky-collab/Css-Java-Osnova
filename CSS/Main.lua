@@ -1242,13 +1242,15 @@ local MovementCard = Card(
     MovementPage,
     "MoveCard",
     UDim2.fromOffset(28, 92),
-    UDim2.new(1, -56, 0, 140)
+    UDim2.new(1, -56, 0, 228)
 )
 
 Badge(MovementCard, "MOVEMENT")
 Heading(MovementCard, "Motion")
 
---// SPEED-HACK = 33
+--//==================================================
+--// PLAYER SPEED HACK
+--//==================================================
 
 local speedHackEnabled = false
 
@@ -1281,6 +1283,207 @@ CreateToggle(MovementCard, "speed-hack", 72, function(state)
         end
     end
 end)
+
+--//==================================================
+--// SPEEDHACK CAR
+--// VehicleSeat MaxSpeed is scaled from its original value.
+--// The original value is cached so +/- never compounds the change.
+--//==================================================
+
+local carSpeedEnabled = false
+local carSpeedMultiplier = 2.00
+local CAR_SPEED_MIN = 0.25
+local CAR_SPEED_MAX = 5.00
+local CAR_SPEED_STEP = 0.25
+local originalCarSpeeds = setmetatable({}, {__mode = "k"})
+
+local function rememberCarSpeed(seat)
+    if not seat or not seat:IsA("VehicleSeat") then
+        return
+    end
+
+    if originalCarSpeeds[seat] == nil then
+        local ok, value = pcall(function()
+            return seat.MaxSpeed
+        end)
+
+        if ok and typeof(value) == "number" then
+            originalCarSpeeds[seat] = value
+        end
+    end
+end
+
+local function applyCarSpeed(seat)
+    if not seat or not seat:IsA("VehicleSeat") then
+        return
+    end
+
+    rememberCarSpeed(seat)
+
+    local baseSpeed = originalCarSpeeds[seat]
+    if not baseSpeed then
+        return
+    end
+
+    pcall(function()
+        seat.MaxSpeed = carSpeedEnabled
+            and (baseSpeed * carSpeedMultiplier)
+            or baseSpeed
+    end)
+end
+
+local function applyCarSpeedToAll()
+    for _, object in ipairs(workspace:GetDescendants()) do
+        if object:IsA("VehicleSeat") then
+            applyCarSpeed(object)
+        end
+    end
+end
+
+for _, object in ipairs(workspace:GetDescendants()) do
+    if object:IsA("VehicleSeat") then
+        rememberCarSpeed(object)
+    end
+end
+
+workspace.DescendantAdded:Connect(function(object)
+    if object:IsA("VehicleSeat") then
+        task.defer(function()
+            rememberCarSpeed(object)
+            if carSpeedEnabled then
+                applyCarSpeed(object)
+            end
+        end)
+    end
+end)
+
+Player.CharacterAdded:Connect(function(character)
+    character.DescendantAdded:Connect(function(object)
+        if object:IsA("VehicleSeat") then
+            task.defer(function()
+                rememberCarSpeed(object)
+                if carSpeedEnabled then
+                    applyCarSpeed(object)
+                end
+            end)
+        end
+    end)
+end)
+
+local CarSpeedRow = Create("Frame", {
+    Name = "SpeedHackCarRow",
+    Position = UDim2.fromOffset(20, 126),
+    Size = UDim2.new(1, -40, 0, 82),
+    BackgroundColor3 = COLORS.CardInner,
+    BackgroundTransparency = 0.2,
+    BorderSizePixel = 0,
+    ZIndex = 10
+}, MovementCard)
+
+Corner(CarSpeedRow, 14)
+Stroke(CarSpeedRow, COLORS.Line, 0.9, 1)
+
+Create("TextLabel", {
+    Position = UDim2.fromOffset(14, 9),
+    Size = UDim2.new(1, -28, 0, 18),
+    BackgroundTransparency = 1,
+    Text = "speedhack car",
+    TextColor3 = COLORS.Text,
+    TextSize = 13,
+    Font = FONT,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 11
+}, CarSpeedRow)
+
+local CarSpeedValue = Create("TextLabel", {
+    AnchorPoint = Vector2.new(0.5, 0),
+    Position = UDim2.new(0.5, 0, 0, 34),
+    Size = UDim2.fromOffset(90, 28),
+    BackgroundTransparency = 1,
+    Text = "x2.00",
+    TextColor3 = COLORS.Accent2,
+    TextSize = 17,
+    Font = FONT,
+    TextXAlignment = Enum.TextXAlignment.Center,
+    ZIndex = 12
+}, CarSpeedRow)
+
+local function UpdateCarSpeedLabel()
+    CarSpeedValue.Text = "x" .. string.format("%.2f", carSpeedMultiplier)
+end
+
+local MinusButton = Create("TextButton", {
+    Name = "Minus",
+    Position = UDim2.fromOffset(14, 34),
+    Size = UDim2.fromOffset(58, 30),
+    BackgroundColor3 = COLORS.Minus,
+    BorderSizePixel = 0,
+    Text = "−",
+    TextColor3 = COLORS.White,
+    TextSize = 18,
+    Font = FONT,
+    AutoButtonColor = false,
+    ZIndex = 12
+}, CarSpeedRow)
+
+Corner(MinusButton, 9)
+
+local PlusButton = Create("TextButton", {
+    Name = "Plus",
+    AnchorPoint = Vector2.new(1, 0),
+    Position = UDim2.new(1, -14, 0, 34),
+    Size = UDim2.fromOffset(58, 30),
+    BackgroundColor3 = COLORS.Plus,
+    BorderSizePixel = 0,
+    Text = "+",
+    TextColor3 = COLORS.White,
+    TextSize = 18,
+    Font = FONT,
+    AutoButtonColor = false,
+    ZIndex = 12
+}, CarSpeedRow)
+
+Corner(PlusButton, 9)
+
+local function SetCarSpeedMultiplier(value)
+    carSpeedMultiplier = math.clamp(
+        math.round(value / CAR_SPEED_STEP) * CAR_SPEED_STEP,
+        CAR_SPEED_MIN,
+        CAR_SPEED_MAX
+    )
+
+    UpdateCarSpeedLabel()
+
+    if carSpeedEnabled then
+        applyCarSpeedToAll()
+    end
+end
+
+MinusButton.Activated:Connect(function()
+    SetCarSpeedMultiplier(carSpeedMultiplier - CAR_SPEED_STEP)
+end)
+
+PlusButton.Activated:Connect(function()
+    SetCarSpeedMultiplier(carSpeedMultiplier + CAR_SPEED_STEP)
+end)
+
+CreateToggle(MovementCard, "speedhack car", 126, function(state)
+    carSpeedEnabled = state
+
+    if state then
+        applyCarSpeedToAll()
+    else
+        for seat, baseSpeed in pairs(originalCarSpeeds) do
+            if seat and seat.Parent then
+                pcall(function()
+                    seat.MaxSpeed = baseSpeed
+                end)
+            end
+        end
+    end
+end)
+
+UpdateCarSpeedLabel()
 
 --//==================================================
 --// OTHER + BALANCE
