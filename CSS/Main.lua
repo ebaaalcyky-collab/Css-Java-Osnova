@@ -272,18 +272,21 @@ local Brand = Create("Frame", {
     ZIndex = 6
 }, Sidebar)
 
-local LogoMark = Create("Frame", {
+local LogoMark = Create("ImageLabel", {
     Size = UDim2.fromOffset(42, 42),
     Position = UDim2.fromOffset(0, 6),
     BackgroundColor3 = COLORS.Accent,
     BorderSizePixel = 0,
+    Image = "",
+    ScaleType = Enum.ScaleType.Crop,
     ZIndex = 7
 }, Brand)
 Corner(LogoMark, 13)
 Create("TextLabel", {
+    Name = "LogoFallback",
     Size = UDim2.fromScale(1, 1),
     BackgroundTransparency = 1,
-    Text = "CJ",
+    Text = "",
     TextColor3 = COLORS.Text,
     TextSize = 16,
     Font = FONT,
@@ -490,29 +493,38 @@ local HomePage = Create("Frame", {
     ZIndex = 4
 }, PagesFolder)
 
-local ProfileCard = Card(HomePage, "ProfileCard", UDim2.fromOffset(28, 92), UDim2.new(0.42, -36, 0, 392))
-Badge(ProfileCard, "PLAYER")
-Heading(ProfileCard, "Profile")
-
+local ProfileCard = Card(HomePage, "ProfileCard", UDim2.fromOffset(28, 92), UDim2.new(1, -56, 0, 148))
 local Avatar = Create("ImageLabel", {
-    Position = UDim2.fromOffset(24, 78),
-    Size = UDim2.fromOffset(96, 96),
+    Position = UDim2.fromOffset(18, 18),
+    Size = UDim2.fromOffset(112, 112),
     BackgroundColor3 = COLORS.CardInner,
     BorderSizePixel = 0,
     Image = "",
     ScaleType = Enum.ScaleType.Crop,
     ZIndex = 10
 }, ProfileCard)
-Corner(Avatar, 18)
-Stroke(Avatar, COLORS.Accent, 0.45, 1)
+Corner(Avatar, 22)
+Stroke(Avatar, COLORS.Accent, 0.25, 2)
+
+Create("TextLabel", {
+    Position = UDim2.fromOffset(148, 28),
+    Size = UDim2.new(1, -168, 0, 18),
+    BackgroundTransparency = 1,
+    Text = "HOME",
+    TextColor3 = COLORS.Accent2,
+    TextSize = 12,
+    Font = FONT,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 10
+}, ProfileCard)
 
 local HomeName = Create("TextLabel", {
-    Position = UDim2.fromOffset(24, 186),
-    Size = UDim2.new(1, -48, 0, 28),
+    Position = UDim2.fromOffset(148, 50),
+    Size = UDim2.new(1, -168, 0, 32),
     BackgroundTransparency = 1,
     Text = Player and Player.Name or "Player",
     TextColor3 = COLORS.Text,
-    TextSize = 18,
+    TextSize = 22,
     Font = FONT,
     TextXAlignment = Enum.TextXAlignment.Left,
     TextTruncate = Enum.TextTruncate.AtEnd,
@@ -520,25 +532,24 @@ local HomeName = Create("TextLabel", {
 }, ProfileCard)
 
 local HomeId = Create("TextLabel", {
-    Position = UDim2.fromOffset(24, 214),
-    Size = UDim2.new(1, -48, 0, 20),
+    Position = UDim2.fromOffset(148, 86),
+    Size = UDim2.new(1, -168, 0, 20),
     BackgroundTransparency = 1,
     Text = "ID " .. tostring(Player and Player.UserId or 0),
-    TextColor3 = COLORS.Mute,
-    TextSize = 12,
+    TextColor3 = COLORS.Dim,
+    TextSize = 13,
     Font = FONT,
     TextXAlignment = Enum.TextXAlignment.Left,
     ZIndex = 10
 }, ProfileCard)
 
-local StatsCard = Card(HomePage, "StatsCard", UDim2.new(0.42, 8, 0, 92), UDim2.new(0.58, -36, 0, 392))
-Badge(StatsCard, "SESSION")
-Heading(StatsCard, "Live info")
+local StatsCard = Card(HomePage, "StatsCard", UDim2.fromOffset(28, 256), UDim2.new(1, -56, 0, 228))
+Badge(StatsCard, "LIVE")
+Heading(StatsCard, "Session")
 
-local GameValue = StatLine(StatsCard, 78, "Game")
-local FpsValue = StatLine(StatsCard, 132, "FPS")
-local PingValue = StatLine(StatsCard, 186, "Ping")
-local PlaceValue = StatLine(StatsCard, 240, "Place")
+local GameValue = StatLine(StatsCard, 72, "Game")
+local FpsValue = StatLine(StatsCard, 122, "FPS")
+local PingValue = StatLine(StatsCard, 172, "Ping")
 
 -- AIM cleaned
 local AimPage = Create("Frame", {
@@ -747,12 +758,14 @@ task.spawn(function()
     if ok and url then
         Avatar.Image = url
         MiniAva.Image = url
+        LogoMark.Image = url
+        _G.CSS_JAVA_AVATAR = url
     end
 end)
 
 -- Game name
 task.spawn(function()
-    PlaceValue.Text = tostring(game.PlaceId)
+    local _ = tostring(game.PlaceId)
     local ok, info = pcall(function()
         return MarketplaceService:GetProductInfo(game.PlaceId)
     end)
@@ -819,36 +832,68 @@ local function readNumber(obj)
     return nil
 end
 
+local function parseMoneyText(text)
+    if type(text) ~= "string" then return nil end
+    local raw = text:gsub("%s+", "")
+    local mult = 1
+    if raw:lower():find("k") then mult = 1000 end
+    if raw:lower():find("m") then mult = 1000000 end
+    if raw:lower():find("b") then mult = 1000000000 end
+    local num = raw:match("(%-?%d+[%.,]?%d*)")
+    if not num then return nil end
+    num = num:gsub(",", ".")
+    local n = tonumber(num)
+    if not n then return nil end
+    return n * mult
+end
+
 local function findMoney()
     local best, source = nil, nil
-    local function consider(obj, label)
-        local n = readNumber(obj)
-        if n ~= nil then
+    local function consider(n, label)
+        if type(n) == "number" then
             best = n
             source = label
         end
     end
 
-    local ls = Player:FindFirstChild("leaderstats")
-    if ls then
-        for _, child in ipairs(ls:GetChildren()) do
-            if isMoneyName(child.Name) then
-                consider(child, "leaderstats." .. child.Name)
-            end
-        end
-        if not source then
-            for _, child in ipairs(ls:GetChildren()) do
-                if readNumber(child) ~= nil then
-                    consider(child, "leaderstats." .. child.Name)
+    local function scanValues(root, prefix)
+        if not root then return end
+        for _, obj in ipairs(root:GetDescendants()) do
+            if isMoneyName(obj.Name) then
+                local n = readNumber(obj)
+                if n ~= nil then
+                    consider(n, prefix .. obj.Name)
+                    return
                 end
             end
         end
     end
 
+    scanValues(Player:FindFirstChild("leaderstats"), "leaderstats.")
+    if not source then scanValues(Player, "player.") end
     if not source then
-        for _, child in ipairs(Player:GetChildren()) do
-            if isMoneyName(child.Name) then
-                consider(child, "player." .. child.Name)
+        pcall(function()
+            for name, value in pairs(Player:GetAttributes()) do
+                if isMoneyName(name) and tonumber(value) then
+                    consider(tonumber(value), "attr." .. name)
+                end
+            end
+        end)
+    end
+
+    if not source then
+        local pg = Player:FindFirstChild("PlayerGui")
+        if pg then
+            for _, obj in ipairs(pg:GetDescendants()) do
+                if obj:IsA("TextLabel") or obj:IsA("TextButton") then
+                    local t = obj.Text or ""
+                    if t:find("%$") or isMoneyName(obj.Name) then
+                        local n = parseMoneyText(t)
+                        if n and n >= 0 then
+                            consider(n, "hud." .. obj.Name)
+                        end
+                    end
+                end
             end
         end
     end
@@ -943,21 +988,29 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 local closed = false
-local reopen = Create("TextButton", {
+local reopen = Create("ImageButton", {
     AnchorPoint = Vector2.new(1, 1),
     Position = UDim2.new(1, -22, 1, -22),
     Size = UDim2.fromOffset(54, 54),
     BackgroundColor3 = COLORS.Accent,
     BorderSizePixel = 0,
-    Text = "CJ",
-    TextColor3 = COLORS.Text,
-    TextSize = 16,
-    Font = FONT,
+    Image = "",
+    ScaleType = Enum.ScaleType.Crop,
     AutoButtonColor = false,
     Visible = false,
     ZIndex = 100
 }, ScreenGui)
 Corner(reopen, 18)
+Stroke(reopen, COLORS.Accent, 0.2, 2)
+task.spawn(function()
+    for _ = 1, 40 do
+        if _G.CSS_JAVA_AVATAR and _G.CSS_JAVA_AVATAR ~= "" then
+            reopen.Image = _G.CSS_JAVA_AVATAR
+            break
+        end
+        task.wait(0.1)
+    end
+end)
 
 local rDrag, rStart, rPos, rMoved = false, nil, nil, false
 reopen.InputBegan:Connect(function(input)
