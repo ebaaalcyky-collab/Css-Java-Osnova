@@ -1,5 +1,5 @@
 --// CSS JAVA - Visual redesign
---// Window size locked: 1000 x 620
+--// Window size locked: 800 x 500
 --// Home + session balance + cleaned Aim tab
 --// WH / ESP + Speed Hack added from previous version
 
@@ -15,7 +15,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local Player = Players.LocalPlayer
 
 local CONFIG = {
-    WindowSize = Vector2.new(1000, 620),
+    WindowSize = Vector2.new(800, 500),
     MinScale = 0.42,
     MaxScale = 1,
     SidebarWidth = 236,
@@ -526,7 +526,7 @@ local MainFrame = Create("Frame", {
     Name = "MainWindow",
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.fromScale(0.5, 0.5),
-    Size = UDim2.fromOffset(1000, 620),
+    Size = UDim2.fromOffset(800, 500),
     BackgroundColor3 = COLORS.BgB,
     BackgroundTransparency = 0.04,
     BorderSizePixel = 0,
@@ -1931,8 +1931,8 @@ local function UpdateScale()
 
     UIScale.Scale = math.clamp(
         math.min(
-            (v.X - 20) / 1000,
-            (v.Y - 20) / 620
+            (v.X - 20) / 800,
+            (v.Y - 20) / 500
         ),
         CONFIG.MinScale,
         CONFIG.MaxScale
@@ -2121,7 +2121,7 @@ reopen.Activated:Connect(function()
     MainFrame.Size = UDim2.fromOffset(920, 570)
 
     Tween(MainFrame, {
-        Size = UDim2.fromOffset(1000, 620),
+        Size = UDim2.fromOffset(800, 500),
         BackgroundTransparency = 0.04
     }, 0.2)
 
